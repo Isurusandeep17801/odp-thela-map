@@ -72,35 +72,35 @@ button,input,select,textarea{font:inherit;color:inherit}
 .kb:hover{background:var(--accent);color:var(--accent-ink)}
 .kb.add{opacity:0}
 .card:hover .kb.add,.card.sel .kb.add,.card.has-kids .kb.add,.kb.add:focus-visible{opacity:1}
-/* photos: a small badge on each card's top edge, and a full-screen slideshow (always dark, in both themes) */
-:root{--scrim:#0E100F;--scrim-fg:#F2F4F2;--scrim-muted:#A9B1AB;--scrim-line:rgba(255,255,255,.16)}
-.pic{position:absolute;right:12px;top:-12px;height:22px;min-width:24px;padding:0 6px;border-radius:11px;border:1.5px solid var(--accent);background:var(--card);color:var(--accent);font:600 11px/1 var(--f-mono);display:inline-flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;z-index:3;touch-action:none}
-.pic svg{width:13px;height:13px;flex:none}
-.pic:hover{background:var(--accent);color:var(--accent-ink)}
-.pic.none{opacity:.4}
-.card:hover .pic.none,.card.sel .pic.none,.pic.none:focus-visible{opacity:1}
-body.nopics .pic,body.ro .pic.none{display:none}
-.lb{position:fixed;inset:0;z-index:50;background:var(--scrim);color:var(--scrim-fg);display:flex;flex-direction:column;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px))}
-.lb-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 0}
-.lb-head{display:grid;gap:2px;min-width:0;flex:1}
-.lb-head h2{margin:0;font-size:17px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
-.lb-head .lab{color:var(--scrim-muted)}
-.lb-status{font:500 12px var(--f-mono);color:var(--scrim-muted)}
-.lb-status.warn{color:var(--warn)}
-.lb-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.lb .btn{background:transparent;border-color:var(--scrim-line);color:var(--scrim-fg)}
-.lb .btn:hover{border-color:var(--scrim-fg)}
-.lb .btn.primary{background:var(--scrim-fg);border-color:var(--scrim-fg);color:#141716}
-.lb-stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.lb-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:2px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
-.lb-msg{margin:0;max-width:34ch;text-align:center;color:var(--scrim-muted);font-size:15px}
-.lb-nav{position:absolute;top:50%;width:44px;height:44px;margin-top:-22px;border-radius:50%;border:1px solid var(--scrim-line);background:rgba(0,0,0,.35);color:var(--scrim-fg);font:400 28px/1 var(--f-ui);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0 0 3px}
-.lb-nav:hover{border-color:var(--scrim-fg)}
-.lb-nav.prev{left:0}
-.lb-nav.next{right:0}
-.lb-dots{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:14px 0 18px;min-height:46px}
-.lb-dots button{width:9px;height:9px;padding:0;border-radius:50%;border:0;background:var(--scrim-line);cursor:pointer}
-.lb-dots button.on{background:var(--scrim-fg)}
+/* photos: a small icon in each card's top-right corner, and a small photo menu that opens from it */
+.pic{position:absolute;top:6px;right:6px;display:inline-flex;align-items:center;gap:3px;height:16px;padding:0 3px;border:0;border-radius:3px;background:transparent;color:var(--muted);font:600 10px/1 var(--f-mono);cursor:pointer;opacity:.35;touch-action:none;z-index:2}
+.pic svg{width:12px;height:12px;flex:none}
+.pic.has{opacity:.9}
+.card:hover .pic,.card.sel .pic,.pic:focus-visible,.pic.on{opacity:1}
+.pic:hover,.pic.on{color:var(--accent)}
+body.nopics .pic,body.ro .pic:not(.has){display:none}
+.pp{position:fixed;z-index:40;width:max-content;max-width:calc(100vw - 32px)}
+.pp-stage{position:relative;display:flex;align-items:center;justify-content:center;min-width:120px;min-height:80px;border-radius:3px;overflow:hidden;background:var(--paper);box-shadow:0 8px 26px rgba(0,0,0,.28);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.pp.bare .pp-stage,.pp.bare .pp-edge.del{display:none}
+.pp.bare .pp-edge.add{position:static;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.pp-stage img{display:block;max-width:min(320px,calc(100vw - 40px));max-height:240px;width:auto;height:auto}
+.pp-msg{margin:0;padding:12px 16px;color:var(--muted);font-size:12.5px;text-align:center}
+.pp-nav{position:absolute;top:50%;margin-top:-13px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font:400 18px/1 var(--f-ui);display:flex;align-items:center;justify-content:center;padding:0 0 2px;cursor:pointer;opacity:0}
+.pp:hover .pp-nav,.pp-nav:focus-visible{opacity:1}
+.pp-nav.prev{left:6px}
+.pp-nav.next{right:6px}
+.pp-dots{position:absolute;left:0;right:0;bottom:7px;display:flex;justify-content:center;gap:5px}
+.pp-dots:empty{display:none}
+.pp-dots button{width:6px;height:6px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.3);cursor:pointer}
+.pp-dots button.on{background:#fff}
+.pp-status{position:absolute;left:6px;top:6px;padding:2px 6px;border-radius:3px;background:rgba(0,0,0,.6);color:#fff;font:500 10.5px/1.4 var(--f-mono)}
+.pp-status:empty{display:none}
+.pp-status.warn{background:var(--warn);color:var(--accent-ink)}
+.pp-edge{position:absolute;top:-11px;width:22px;height:22px;padding:0;border-radius:50%;border:1.5px solid var(--accent);background:var(--card);color:var(--accent);font:600 14px/1 var(--f-mono);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1}
+.pp-edge:hover{background:var(--accent);color:var(--accent-ink)}
+.pp-edge.add{right:-11px}
+.pp-edge.del{left:-11px;opacity:0}
+.pp:hover .pp-edge.del,.pp-edge.del:focus-visible{opacity:1}
 .drawer{position:absolute;left:8px;right:8px;top:100%;margin-top:1px;background:var(--dbg);border:1px solid var(--dbd);border-top:0;border-radius:0 0 4px 4px;padding:13px 0 3px;cursor:default;box-shadow:0 1px 0 var(--line)}
 .row{display:flex;gap:7px;align-items:baseline;padding:4px 10px;font-size:12.5px;line-height:1.35;color:var(--fg);cursor:pointer;border-top:1px dashed var(--dbd);overflow-wrap:anywhere}
 .row:first-child{border-top:0}
@@ -167,7 +167,7 @@ kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
  .board{height:62vh;flex:none}
  .panel{overflow:visible}
 }
-@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .15s}}
+@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .15s}.pp-nav,.pp-edge.del{transition:opacity .12s}}
 </style>
 </head>
 <body>
@@ -203,24 +203,18 @@ kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
   </main>
 </div>
 
-<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-labelledby="lb-title">
-  <div class="lb-top">
-    <div class="lb-head"><span class="lab" id="lb-count"></span><h2 id="lb-title"></h2></div>
-    <span class="lb-status" id="lb-status" role="status"></span>
-    <div class="lb-actions">
-      <button class="btn primary" id="lb-add" type="button">Add photos</button>
-      <button class="btn" id="lb-del" type="button">Delete photo</button>
-      <button class="btn" id="lb-close" type="button" aria-label="Close photos">Close</button>
-    </div>
+<div class="pp" id="pp" hidden role="dialog" aria-label="Photos">
+  <div class="pp-stage" id="pp-stage">
+    <img id="pp-img" alt="" hidden>
+    <p class="pp-msg" id="pp-msg" hidden></p>
+    <button class="pp-nav prev" id="pp-prev" type="button" aria-label="Previous photo">‹</button>
+    <button class="pp-nav next" id="pp-next" type="button" aria-label="Next photo">›</button>
+    <div class="pp-dots" id="pp-dots"></div>
+    <span class="pp-status" id="pp-status" role="status"></span>
   </div>
-  <div class="lb-stage" id="lb-stage">
-    <img id="lb-img" alt="" hidden>
-    <p class="lb-msg" id="lb-msg" hidden></p>
-    <button class="lb-nav prev" id="lb-prev" type="button" aria-label="Previous photo">‹</button>
-    <button class="lb-nav next" id="lb-next" type="button" aria-label="Next photo">›</button>
-  </div>
-  <div class="lb-dots" id="lb-dots"></div>
-  <input type="file" id="lb-file" accept="image/*" multiple hidden>
+  <button class="pp-edge add" id="pp-add" type="button" title="Add photos" aria-label="Add photos">+</button>
+  <button class="pp-edge del" id="pp-del" type="button" title="Delete this photo" aria-label="Delete this photo">×</button>
+  <input type="file" id="pp-file" accept="image/*" multiple hidden>
 </div>
 
 <script>
@@ -395,7 +389,7 @@ function sync(force){
   renderBoard();
   if(!fitted&&!hadView&&points.size){fitted=true;fitView()}
   if(force||panelSig()!==lastSig){if(editingPanel()&&!force)panelStale=true;else renderPanel()}
-  if(lb)renderLb();
+  if(lb)renderPp();
   refreshStatus();
 }
 let tries=0;
@@ -431,7 +425,7 @@ function listenPics(){
     sync();
   },()=>{
     if(db!==api)return;
-    picsReady=false;document.body.classList.add("nopics");closeLb();
+    picsReady=false;document.body.classList.add("nopics");closePp();
   }));
 }
 /* a fingerprint of what the side panel shows, so remote changes only redraw it when they matter */
@@ -464,6 +458,7 @@ function applyView(){
   bd.style.backgroundSize=a+"px "+a+"px,"+a+"px "+a+"px,"+b+"px "+b+"px,"+b+"px "+b+"px";
   bd.style.backgroundPosition=p+","+p+","+p+","+p;
   updateZoomSel();saveView();
+  if(lb)placePp();
 }
 function zoomAt(nz,cx,cy){nz=clampZ(nz);const k=nz/view.z;view.x=cx-(cx-view.x)*k;view.y=cy-(cy-view.y)*k;view.z=nz;applyView()}
 function zoomCenter(nz){zoomAt(nz,bd.clientWidth/2,bd.clientHeight/2)}
@@ -523,7 +518,7 @@ function renderBoard(){
     el.setAttribute("aria-label",(p.title||"Untitled")+", weight "+w+(pc?", "+pc:"")+(kids.length?", "+kids.length+" items":""));
     el.style.cssText="left:"+x+"px;top:"+y+"px;--cw:"+cw+"px;--bw:"+bw+"px;--fs:"+fs+"px"+(pc?";--cc:var(--c-"+pc+")":"");
     el.innerHTML='<div class="wd" aria-hidden="true">'+"●".repeat(w)+"○".repeat(5-w)+'</div><h3>'+esc(p.title||"Untitled")+'</h3>'+(p.note?'<p>'+esc(p.note)+'</p>':'')+
-      (n=>'<button class="pic'+(n?'':' none')+'" type="button" data-act="pics" title="'+(n?'See the photos':'Add photos')+'" aria-label="'+(n?n+' photo'+(n>1?'s':''):'Add photos')+'">'+CAM+(n?'<span>'+n+'</span>':'')+'</button>')(nPics.get(p.id)||0)+
+      (n=>'<button class="pic'+(n?' has':'')+(lb&&lb.card===p.id?' on':'')+'" type="button" data-act="pics" title="'+(n?n+' photo'+(n>1?'s':''):'Photos')+'" aria-label="'+(n?n+' photo'+(n>1?'s':''):'Add photos')+'">'+CAM+(n?'<span>'+n+'</span>':'')+'</button>')(nPics.get(p.id)||0)+
       '<span class="port l" title="Drag onto another card to connect"></span><span class="port" title="Drag onto another card to connect"></span>'+
       '<div class="kidbar">'+(kids.length?'<button class="kb tog" type="button" data-act="toggle" title="'+(p.collapsed?"Open":"Close")+' the list">'+(p.collapsed?"▸":"▾")+' '+kids.length+'</button>':'')+
       '<button class="kb add" type="button" data-act="addkid" title="Add an item to this card\'s list" aria-label="Add an item">+</button></div>'+
@@ -533,6 +528,7 @@ function renderBoard(){
   }
   renderEmpty();
   drawLinks();
+  if(lb)placePp();
 }
 
 function box(id){
@@ -693,7 +689,7 @@ function renderPanel(){
       '<li>Press <kbd>+</kbd> under a card to start a drop-down list of related items. <kbd>▾</kbd> opens or closes it. Click an item to edit it; <kbd>Enter</kbd> in its title adds the next one.</li>'+
       '<li>Select several cards with <kbd>Shift</kbd>+click, or hold <kbd>Shift</kbd> and drag a box on the board. <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all. Drag any selected card to move them together.</li>'+
       '<li>Hold <kbd>Ctrl</kbd> and drag a card to make a new card with the same size and colour.</li>'+
-      '<li>Press the photo badge on the top edge of a card to see its photos. Add photos there, swipe or use the arrow keys to move between them, and Delete photo removes the one you\'re looking at.</li>'+
+      '<li>Hover over the photo icon in a card\'s top-right corner to see its photos. Click the icon to keep them open, add photos with the + on the photo\'s edge, swipe or press the arrows to move between them, and Delete removes the one showing.</li>'+
       '<li>Drag from a dot on either side of a card onto another card to connect them.</li>'+
       '<li>Click a line to write a note on it or change its colour or weight. A dot in the middle of a line means it has a note.</li>'+
       '<li>Select a card, an item or a line and press <kbd>Delete</kbd> to remove it. <kbd>Ctrl</kbd>+<kbd>Z</kbd> brings back what you deleted.</li></ol>'+
@@ -777,7 +773,7 @@ function deletePoints(ids){
   undo.push(u);if(undo.length>30)undo.shift();
   gone.forEach(l=>{links.delete(l.id);drop("links",l.id)});ps.forEach(p=>{points.delete(p.id);drop("points",p.id)});
   u.pics=removePics([...pics.values()].filter(q=>all.has(q.card)),u);
-  if(lb&&!points.has(lb.card))closeLb();
+  if(lb&&!points.has(lb.card))closePp();
   sel=new Set(back?[back]:[]);selLink=null;
   flash((onlyItem?"Item":ps.length>1?ps.length+" cards and items":"Card")+" deleted. Press Ctrl+Z to undo");render();bd.focus({preventScroll:true});
 }
@@ -794,7 +790,7 @@ function undoDelete(){
   u.points.forEach(p=>{if(p.parent&&!points.has(p.parent)&&!u.points.some(q=>q.id===p.parent))return;points.set(p.id,p);put("points",p.id,p)});
   u.links.forEach(l=>{if(points.has(l.from)&&points.has(l.to)){links.set(l.id,l);put("links",l.id,l)}});
   restorePics(u);
-  if(lb)renderLb();
+  if(lb)renderPp();
   if(u.points.length){const back=u.points.filter(p=>points.has(p.id));const main=back.filter(p=>isCard(p.id));sel=new Set((main.length?main:back).filter(p=>!isHidden(p)).map(p=>p.id));selLink=null}
   else if(u.links.length&&links.has(u.links[0].id)){selLink=u.links[0].id;sel=new Set()}
   flash("Restored");render();
@@ -820,7 +816,7 @@ bd.addEventListener("pointerdown",e=>{
   if(act){
     e.preventDefault();e.stopPropagation();
     const id=act.closest(".card").dataset.id;
-    if(act.dataset.act==="addkid")addKid(id);else if(act.dataset.act==="pics")openLb(id);else toggleKids(id);
+    if(act.dataset.act==="addkid")addKid(id);else if(act.dataset.act==="pics")togglePp(id);else toggleKids(id);
     return;
   }
   const port=mid||readOnly?null:e.target.closest(".port");
@@ -949,10 +945,49 @@ bd.addEventListener("wheel",e=>{
   const r=bd.getBoundingClientRect(),step=e.deltaMode===1?40:e.deltaMode===2?400:1;
   zoomAt(view.z*Math.exp(-e.deltaY*step*0.0015),e.clientX-r.left,e.clientY-r.top);
 },{passive:false});
+/* two-finger pinch on a phone or tablet: zoom around the fingers, and move the board with them */
+const touches=new Map();let pinch=null;
+function cancelGesture(){
+  if(drag){const d=drag;drag=null;if(d.moved){d.items.forEach(it=>{const q=points.get(it.id);if(q){q.x=it.ox;q.y=it.oy}});if(d.created)points.delete(d.id)}renderBoard()}
+  if(wire){wire=null;document.body.classList.remove("wiring");$("#wire").setAttribute("visibility","hidden");cv.querySelectorAll(".card.target").forEach(c=>c.classList.remove("target"))}
+  if(mq){const m=mq;mq=null;bd.classList.remove("boxing");m.el.remove();renderBoard()}
+  if(pan){pan=null;bd.classList.remove("panning")}
+  if(held)sync();
+}
+function pinchStart(){
+  const [a,b]=[...touches.values()],r=bd.getBoundingClientRect();
+  const mx=(a.x+b.x)/2-r.left,my=(a.y+b.y)/2-r.top;
+  pinch={d:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),z:view.z,cx:(mx-view.x)/view.z,cy:(my-view.y)/view.z};
+}
+bd.addEventListener("pointerdown",e=>{
+  if(e.pointerType!=="touch")return;
+  touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(touches.size===2){e.stopImmediatePropagation();e.preventDefault();cancelGesture();if(lb)closePp();pinchStart()}
+  else if(touches.size>2)e.stopImmediatePropagation();
+},true);
+bd.addEventListener("pointermove",e=>{
+  if(!touches.has(e.pointerId))return;
+  touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(!pinch)return;
+  e.stopImmediatePropagation();
+  if(touches.size<2)return;
+  const [a,b]=[...touches.values()],r=bd.getBoundingClientRect();
+  const mx=(a.x+b.x)/2-r.left,my=(a.y+b.y)/2-r.top;
+  const nz=clampZ(pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d);
+  view.z=nz;view.x=mx-pinch.cx*nz;view.y=my-pinch.cy*nz;applyView();
+},true);
+function touchEnd(e){
+  if(!touches.has(e.pointerId))return;
+  touches.delete(e.pointerId);
+  if(pinch){e.stopImmediatePropagation();if(touches.size<2)pinch=touches.size?{done:true}:null}
+  if(!touches.size)pinch=null;
+}
+bd.addEventListener("pointerup",touchEnd,true);
+bd.addEventListener("pointercancel",touchEnd,true);
 bd.addEventListener("scroll",()=>{if(bd.scrollLeft||bd.scrollTop){bd.scrollLeft=0;bd.scrollTop=0}});
 cv.addEventListener("keydown",e=>{
   const k=e.target.closest(".kb,.pic");
-  if(k&&(e.key==="Enter"||e.key===" ")){e.preventDefault();const id=k.closest(".card").dataset.id;if(k.dataset.act==="addkid")addKid(id);else if(k.dataset.act==="pics")openLb(id);else toggleKids(id);return}
+  if(k&&(e.key==="Enter"||e.key===" ")){e.preventDefault();const id=k.closest(".card").dataset.id;if(k.dataset.act==="addkid")addKid(id);else if(k.dataset.act==="pics")togglePp(id);else toggleKids(id);return}
   const el=e.target.closest(".card");if(el&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(el.dataset.id)}
 });
 
@@ -971,13 +1006,11 @@ $("#zsel").addEventListener("change",e=>{zoomCenter(+e.target.value/100);e.targe
 function typing(t){return t&&(t.tagName==="INPUT"&&!["radio","checkbox","button","file"].includes(t.type)||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable)}
 document.addEventListener("keydown",e=>{
   const mod=e.ctrlKey||e.metaKey;
-  if(lb){
-    if(e.key==="Escape"){e.preventDefault();closeLb()}
-    else if(e.key==="ArrowLeft"){e.preventDefault();lbStep(-1)}
-    else if(e.key==="ArrowRight"){e.preventDefault();lbStep(1)}
-    else if((e.key==="Delete"||e.key==="Backspace")&&!typing(e.target)){e.preventDefault();deletePic()}
-    else if(mod&&!e.shiftKey&&(e.key==="z"||e.key==="Z")){e.preventDefault();undoDelete()}
-    return;
+  if(lb&&e.key==="Escape"){e.preventDefault();closePp();return}
+  if(lb&&lb.pinned&&!typing(e.target)){
+    if(e.key==="ArrowLeft"){e.preventDefault();ppStep(-1);return}
+    if(e.key==="ArrowRight"){e.preventDefault();ppStep(1);return}
+    if(e.key==="Delete"||e.key==="Backspace"){e.preventDefault();deletePic();return}
   }
   if(mod&&(e.key==="="||e.key==="+")){e.preventDefault();zoomStep(1);return}
   if(mod&&(e.key==="-"||e.key==="_")){e.preventDefault();zoomStep(-1);return}
@@ -1027,31 +1060,48 @@ function restorePics(u){
   });
   renderBoard();
 }
-function lbStatus(t,warn){const s=$("#lb-status");s.textContent=t||"";s.classList.toggle("warn",!!warn)}
-function openLb(cid){
-  if(!points.has(cid)||!picsReady)return;
-  lb={card:cid,i:0,id:null};$("#lb").hidden=false;lbStatus("");renderLb();
-  (picsOf(cid).length||readOnly?$("#lb-close"):$("#lb-add")).focus();
+function ppStatus(t,warn){const s=$("#pp-status");s.textContent=t||"";s.classList.toggle("warn",!!warn);if(warn&&t&&$("#pp").classList.contains("bare"))flash(t,true)}
+let ppOpenT=0,ppCloseT=0;
+function openPp(cid,pinned){
+  if(!points.has(cid)||!picsReady||(readOnly&&!picsOf(cid).length))return;
+  clearTimeout(ppOpenT);clearTimeout(ppCloseT);
+  if(!lb||lb.card!==cid){lb={card:cid,i:0,id:null,pinned:!!pinned};ppStatus("")}
+  else if(pinned)lb.pinned=true;
+  $("#pp").hidden=false;renderPp();markIcon();placePp();
 }
-function closeLb(){
+function closePp(){
+  clearTimeout(ppOpenT);clearTimeout(ppCloseT);
   if(!lb)return;
-  const cid=lb.card;lb=null;$("#lb").hidden=true;const img=$("#lb-img");img.hidden=true;img.removeAttribute("src");
-  const el=cardEl(cid);if(el)el.focus({preventScroll:true});
+  lb=null;$("#pp").hidden=true;const img=$("#pp-img");img.hidden=true;img.removeAttribute("src");markIcon();
 }
-function renderLb(){
+function togglePp(cid){if(lb&&lb.card===cid&&lb.pinned)closePp();else openPp(cid,true)}
+function markIcon(){cv.querySelectorAll(".pic.on").forEach(b=>b.classList.remove("on"));const c=lb&&cardEl(lb.card);if(c){const i=c.querySelector(".pic");if(i)i.classList.add("on")}}
+/* keep the menu next to its card's icon while the board moves; close it if the icon leaves the board */
+function placePp(){
   if(!lb)return;
-  const p=points.get(lb.card);if(!p){closeLb();return}
+  const el=cardEl(lb.card),icon=el&&el.querySelector(".pic");if(!icon){closePp();return}
+  const r=icon.getBoundingClientRect(),b=bd.getBoundingClientRect(),pp=$("#pp");
+  if(r.bottom<b.top||r.top>b.bottom||r.right<b.left||r.left>b.right){closePp();return}
+  const w=pp.offsetWidth,h=pp.offsetHeight,W=innerWidth,H=innerHeight;
+  const x=Math.min(Math.max(16,r.right-w+8),W-w-16);
+  const gap=pp.classList.contains("bare")?4:16;let y=r.bottom+gap;if(y+h>H-8)y=Math.max(16,r.top-h-gap);
+  pp.style.left=Math.round(x)+"px";pp.style.top=Math.round(y)+"px";
+}
+function renderPp(){
+  if(!lb)return;
+  const p=points.get(lb.card);if(!p){closePp();return}
   const list=picsOf(lb.card);
   if(lb.id){const j=list.findIndex(q=>q.id===lb.id);if(j>=0)lb.i=j}
   lb.i=Math.max(0,Math.min(lb.i,list.length-1));
   const cur=list[lb.i]||null;lb.id=cur?cur.id:null;
-  $("#lb-title").textContent=p.title||"Untitled";
-  $("#lb-count").textContent=list.length?"Photo "+(lb.i+1)+" of "+list.length:"Photos";
-  $("#lb-prev").hidden=$("#lb-next").hidden=list.length<2;
-  $("#lb-add").hidden=readOnly;$("#lb-del").hidden=readOnly||!cur;
-  $("#lb-dots").innerHTML=list.length>1?list.map((q,j)=>'<button type="button" data-j="'+j+'" class="'+(j===lb.i?"on":"")+'" aria-label="Photo '+(j+1)+'"'+(j===lb.i?' aria-current="true"':'')+'></button>').join(""):"";
-  const img=$("#lb-img"),msg=$("#lb-msg");
-  if(!cur){img.hidden=true;img.removeAttribute("src");msg.textContent=readOnly?"This card has no photos.":"No photos on this card yet. Press Add photos to add some.";msg.hidden=false;return}
+  $("#pp").setAttribute("aria-label",list.length?"Photo "+(lb.i+1)+" of "+list.length:"Photos");
+  $("#pp").classList.toggle("bare",!cur);
+  $("#pp-prev").hidden=$("#pp-next").hidden=list.length<2;
+  $("#pp-add").hidden=readOnly;$("#pp-del").hidden=readOnly||!cur;
+  $("#pp-dots").innerHTML=list.length>1?list.map((q,j)=>'<button type="button" data-j="'+j+'" class="'+(j===lb.i?"on":"")+'" aria-label="Photo '+(j+1)+'"'+(j===lb.i?' aria-current="true"':'')+'></button>').join(""):"";
+  const img=$("#pp-img"),msg=$("#pp-msg");
+  if(!cur){img.hidden=true;img.removeAttribute("src");msg.hidden=true;placePp();return}
+  img.alt="Photo "+(lb.i+1)+" for "+(p.title||"Untitled");
   const shown=picCache.get(cur.id);
   if(shown){if(img.getAttribute("src")!==shown)img.src=shown;img.hidden=false;msg.hidden=true}
   else{
@@ -1059,16 +1109,15 @@ function renderLb(){
     const want=cur.id;
     loadPic(want).then(d=>{if(!lb||lb.id!==want)return;if(d){img.src=d;img.hidden=false;msg.hidden=true}else msg.textContent="This photo couldn't be loaded."});
   }
-  img.alt="Photo "+(lb.i+1)+" for "+(p.title||"Untitled");
   [list[lb.i+1],list[lb.i-1]].forEach(q=>{if(q)loadPic(q.id)});
 }
-function lbStep(d){if(!lb)return;const n=picsOf(lb.card).length;if(n<2)return;lb.i=(lb.i+d+n)%n;lb.id=null;renderLb()}
+function ppStep(d){if(!lb)return;const n=picsOf(lb.card).length;if(n<2)return;lb.i=(lb.i+d+n)%n;lb.id=null;renderPp()}
 function deletePic(){
   if(!lb||readOnly)return;
   const cur=picsOf(lb.card)[lb.i];if(!cur)return;
   const u={points:[],links:[]};undo.push(u);if(undo.length>30)undo.shift();
   u.pics=removePics([cur],u);
-  lb.id=null;renderLb();renderBoard();lbStatus("Photo deleted. Press Ctrl+Z to undo");
+  lb.id=null;renderPp();renderBoard();ppStatus("Deleted. Ctrl+Z to undo");
 }
 /* shrink a photo to fit the database: at most 1600 px on its longest side, saved as JPEG */
 async function shrink(file){
@@ -1092,9 +1141,9 @@ async function shrink(file){
 async function addPhotos(files){
   if(!lb||readOnly||!db)return;
   const cid=lb.card,api=db,list=[...files];if(!list.length)return;
-  let added=0,failed=0;
+  let added=0,failed=0;const plus=$("#pp-add");plus.textContent="…";plus.disabled=true;
   for(let n=0;n<list.length;n++){
-    lbStatus(list.length>1?"Adding photo "+(n+1)+" of "+list.length+"…":"Adding the photo…");
+    ppStatus(list.length>1?"Adding "+(n+1)+" of "+list.length+"…":"Adding…");
     try{
       const {data,w,h}=await shrink(list[n]);
       const id=newId(),meta={card:cid,o:Date.now(),w,h};
@@ -1103,36 +1152,53 @@ async function addPhotos(files){
       await api.doc("pics/"+id).set(meta);
       if(!pics.has(id))pics.set(id,{...meta,id});
       added++;
-      if(lb&&lb.card===cid){lb.id=id;renderLb()}
+      if(lb&&lb.card===cid){lb.id=id;renderPp()}
       renderBoard();
     }catch(e){
-      if(e&&e.code==="denied"){lbStatus("Photos can't be saved yet: the database rules need the photo part.",true);return}
+      if(e&&e.code==="denied"){plus.textContent="+";plus.disabled=false;ppStatus("Photos can't be saved: check the database rules",true);return}
       failed++;
     }
   }
-  lbStatus(failed?(failed===list.length?"That file couldn't be added. Use JPG or PNG photos.":failed+" of the files couldn't be added. Use JPG or PNG photos."):added>1?added+" photos added":"Photo added",!!failed);
+  plus.textContent="+";plus.disabled=false;
+  ppStatus(failed?(failed===list.length?"Couldn't add that file. Use JPG or PNG.":failed+" couldn't be added. Use JPG or PNG."):added>1?added+" photos added":"Photo added",!!failed);
 }
-$("#lb-close").addEventListener("click",closeLb);
-$("#lb-prev").addEventListener("click",()=>lbStep(-1));
-$("#lb-next").addEventListener("click",()=>lbStep(1));
-$("#lb-del").addEventListener("click",deletePic);
-$("#lb-add").addEventListener("click",()=>$("#lb-file").click());
-$("#lb-file").addEventListener("change",e=>{const f=[...(e.target.files||[])];e.target.value="";addPhotos(f)});
-$("#lb-dots").addEventListener("click",e=>{const b=e.target.closest("[data-j]");if(b&&lb){lb.i=+b.dataset.j;lb.id=null;renderLb()}});
-/* swipe or drag sideways to move between photos; a click on the dark area closes */
+$("#pp-img").addEventListener("load",()=>{if(lb)placePp()});
+$("#pp-prev").addEventListener("click",()=>ppStep(-1));
+$("#pp-next").addEventListener("click",()=>ppStep(1));
+$("#pp-del").addEventListener("click",deletePic);
+$("#pp-add").addEventListener("click",()=>$("#pp-file").click());
+$("#pp-file").addEventListener("change",e=>{const f=[...(e.target.files||[])];e.target.value="";addPhotos(f)});
+$("#pp-dots").addEventListener("click",e=>{const b=e.target.closest("[data-j]");if(b&&lb){lb.i=+b.dataset.j;lb.id=null;renderPp()}});
+/* using the menu keeps it open; swipe sideways on the photo to move between photos */
+$("#pp").addEventListener("pointerdown",()=>{if(lb)lb.pinned=true});
 (()=>{
-  const st=$("#lb-stage");let sw=null;
+  const st=$("#pp-stage");let sw=null;
   st.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;sw={x:e.clientX,y:e.clientY}});
-  st.addEventListener("pointerup",e=>{
-    if(!sw)return;const dx=e.clientX-sw.x,dy=e.clientY-sw.y;const onImg=e.target===$("#lb-img");sw=null;
-    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))lbStep(dx<0?1:-1);
-    else if(Math.hypot(dx,dy)<6&&!onImg&&e.target===st)closeLb();
-  });
+  st.addEventListener("pointerup",e=>{if(!sw)return;const dx=e.clientX-sw.x,dy=e.clientY-sw.y;sw=null;if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy))ppStep(dx<0?1:-1)});
   st.addEventListener("pointercancel",()=>{sw=null});
   st.addEventListener("dragstart",e=>e.preventDefault());
 })();
-$("#lb").addEventListener("dragover",e=>{if(lb&&!readOnly)e.preventDefault()});
-$("#lb").addEventListener("drop",e=>{if(!lb||readOnly)return;e.preventDefault();addPhotos([...(e.dataTransfer&&e.dataTransfer.files||[])].filter(f=>/^image\//.test(f.type)))});
+$("#pp").addEventListener("dragover",e=>{if(lb&&!readOnly)e.preventDefault()});
+$("#pp").addEventListener("drop",e=>{if(!lb||readOnly)return;e.preventDefault();lb.pinned=true;addPhotos([...(e.dataTransfer&&e.dataTransfer.files||[])].filter(f=>/^image\//.test(f.type)))});
+/* hover over a card's photo icon to open its menu; it closes when the pointer moves away, unless it was clicked or used */
+document.addEventListener("pointerover",e=>{
+  if(e.pointerType==="touch")return;
+  const tg=e.target&&e.target.closest?e.target:null;if(!tg)return;
+  const icon=tg.closest(".pic"),inPp=tg.closest("#pp");
+  if(icon||inPp)clearTimeout(ppCloseT);
+  if(icon){
+    if(drag||wire||mq||pan)return;
+    const id=icon.closest(".card").dataset.id;
+    if(lb&&(lb.card===id||lb.pinned))return;
+    clearTimeout(ppOpenT);ppOpenT=setTimeout(()=>openPp(id,false),160);
+    return;
+  }
+  clearTimeout(ppOpenT);
+  if(!inPp&&lb&&!lb.pinned){clearTimeout(ppCloseT);ppCloseT=setTimeout(()=>{if(lb&&!lb.pinned)closePp()},350)}
+});
+/* a click anywhere else closes it */
+document.addEventListener("pointerdown",e=>{if(lb&&!(e.target.closest&&e.target.closest("#pp,.pic")))closePp()},true);
+window.addEventListener("resize",()=>{if(lb)placePp()});
 
 /* ---------- backup ---------- */
 function toData(){
@@ -1185,7 +1251,7 @@ function stopShared(quiet){
   flushAll();
   unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];clearTimeout(slowT);
   db=null;W.clear();waiting.clear();roCollapsed.clear();
-  closeLb();
+  closePp();
   points=new Map();links=new Map();pics=new Map();sel=new Set();selLink=null;undo.length=0;pendingRestore=null;fitted=false;notMember=false;
   if(quiet)return;
   offline=true;document.body.classList.add("ro");

@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ODP Idea Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: an endless graph-paper board you pan and zoom, idea cards with pale drop-down lists, joined by coloured, weighted curves, and a narrow editing sheet on the right. Shared live through the artifact's database */
+:root{--bg:#E9ECE6;--paper:#F7F8F5;--panel:#FFFFFF;--card:#FFFFFF;--fg:#1C211E;--muted:#59625C;--line:#D2D7CF;--grid:rgba(30,60,45,.06);--grid2:rgba(30,60,45,.12);--accent:#4B36C8;--accent-ink:#FFFFFF;--tint:rgba(75,54,200,.08);--danger:#B42318;--ok:#15803D;--warn:#8A5300;--desat:#8A8F8C;--c-grey:#6B7280;--c-red:#DC2626;--c-orange:#EA580C;--c-yellow:#CA8A04;--c-green:#16A34A;--c-teal:#0D9488;--c-blue:#2563EB;--c-purple:#7C3AED;--f-ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101311;--paper:#171B19;--panel:#1D221F;--card:#232925;--fg:#E3E8E4;--muted:#9AA39C;--line:#353D38;--grid:rgba(255,255,255,.035);--grid2:rgba(255,255,255,.075);--accent:#A394FF;--accent-ink:#15121F;--tint:rgba(163,148,255,.12);--danger:#FF7B6B;--ok:#55CF80;--warn:#F0B44A;--desat:#7E8580;--c-grey:#9CA3AF;--c-red:#F87171;--c-orange:#FB923C;--c-yellow:#FACC15;--c-green:#4ADE80;--c-teal:#2DD4BF;--c-blue:#60A5FA;--c-purple:#A78BFA;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101311;--paper:#171B19;--panel:#1D221F;--card:#232925;--fg:#E3E8E4;--muted:#9AA39C;--line:#353D38;--grid:rgba(255,255,255,.035);--grid2:rgba(255,255,255,.075);--accent:#A394FF;--accent-ink:#15121F;--tint:rgba(163,148,255,.12);--danger:#FF7B6B;--ok:#55CF80;--warn:#F0B44A;--desat:#7E8580;--c-grey:#9CA3AF;--c-red:#F87171;--c-orange:#FB923C;--c-yellow:#FACC15;--c-green:#4ADE80;--c-teal:#2DD4BF;--c-blue:#60A5FA;--c-purple:#A78BFA;color-scheme:dark}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-ui)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:flex;flex-direction:column;height:100%}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand h1{margin:0;font-size:18px;font-weight:600;letter-spacing:-.01em}
+.mono{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.grow{flex:1}
+.status{font-family:var(--f-mono);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.status.warn{color:var(--warn)}
+.status.warn::before{background:var(--warn)}
+.status.idle::before{background:var(--muted)}
+.who{font-size:13px;color:var(--muted);overflow-wrap:anywhere;min-width:0}
+.btn{border:1px solid var(--line);background:var(--panel);padding:7px 12px;border-radius:3px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.quiet:hover{color:var(--fg);border-color:var(--line)}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;padding:16px}
+.board{position:relative;overflow:hidden;background-color:var(--paper);background-image:linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px),linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:100px 100px,100px 100px,20px 20px,20px 20px;border:1px solid var(--line);border-radius:4px;min-width:0;cursor:grab;touch-action:none}
+.board:focus{outline:none}
+.board.panning,.board.panning .card{cursor:grabbing}
+.board.boxing,.board.boxing .card{cursor:crosshair}
+#canvas{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+#links,#wiresvg{position:absolute;pointer-events:none;overflow:visible}
+#wiresvg{z-index:4}
+.ln{fill:none;stroke-linecap:round;opacity:.9}
+.ln.via{stroke-dasharray:7 6}
+.halo{fill:none;stroke:var(--accent);stroke-linecap:round;opacity:.35}
+.hit{stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:pointer;fill:none}
+.nd{stroke:var(--paper);stroke-width:2;pointer-events:all;cursor:pointer}
+#links.has-sel .ln,#links.has-sel .nd{opacity:.25}
+#links.has-sel .hl{opacity:1}
+.wire{stroke:var(--accent);stroke-width:2.5;stroke-dasharray:6 4;fill:none}
+.marquee{position:absolute;z-index:7;border:1.5px dashed var(--accent);background:var(--tint);pointer-events:none}
+.card{position:absolute;width:var(--cw,204px);background:var(--card);border:var(--bw,1px) solid var(--cb,var(--line));border-radius:3px;padding:9px 14px 13px 12px;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;box-shadow:0 1px 0 var(--line);--dbg:var(--paper);--dbd:var(--line)}
+.card.strong{--cb:var(--fg)}
+.card.tinted{background:var(--cc);background:color-mix(in srgb,var(--cc) 14%,var(--card));--cb:var(--cc);border-width:max(var(--bw,1px),1.5px);--ds:color-mix(in srgb,var(--cc) 50%,var(--desat));--dbg:color-mix(in srgb,var(--ds) 10%,var(--card));--dbd:color-mix(in srgb,var(--ds) 60%,var(--line))}
+.card.tinted .wd{color:var(--cc)}
+.card.faint{opacity:.82}
+.card.open{z-index:1}
+.card.sel{outline:2px solid var(--accent);outline-offset:3px;z-index:2}
+.card.dragging{cursor:grabbing;z-index:3;box-shadow:0 6px 18px rgba(0,0,0,.16)}
+.card.target{outline:2px dashed var(--accent);outline-offset:4px}
+.card .wd{font:500 11px/1 var(--f-mono);letter-spacing:.12em;color:var(--muted)}
+.card h3{margin:6px 0 0;font-size:var(--fs,14.5px);font-weight:600;line-height:1.3;text-wrap:balance}
+.card p{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.port{position:absolute;right:-11px;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:50%;background:var(--card);border:2px solid var(--accent);cursor:crosshair;touch-action:none;opacity:.7;z-index:2}
+.port.l{right:auto;left:-11px}
+.port::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--accent)}
+.card:hover .port,.card.sel .port{opacity:1}
+.port:hover{transform:scale(1.15)}
+.kidbar{position:absolute;left:12px;bottom:-12px;display:flex;gap:4px;z-index:3}
+.kb{height:22px;min-width:22px;padding:0 7px;border-radius:11px;border:1.5px solid var(--accent);background:var(--card);color:var(--accent);font:600 12px/1 var(--f-mono);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;touch-action:none}
+.kb:hover{background:var(--accent);color:var(--accent-ink)}
+.kb.add{opacity:0}
+.card:hover .kb.add,.card.sel .kb.add,.card.has-kids .kb.add,.kb.add:focus-visible{opacity:1}
+.drawer{position:absolute;left:8px;right:8px;top:100%;margin-top:1px;background:var(--dbg);border:1px solid var(--dbd);border-top:0;border-radius:0 0 4px 4px;padding:13px 0 3px;cursor:default;box-shadow:0 1px 0 var(--line)}
+.row{display:flex;gap:7px;align-items:baseline;padding:4px 10px;font-size:12.5px;line-height:1.35;color:var(--fg);cursor:pointer;border-top:1px dashed var(--dbd);overflow-wrap:anywhere}
+.row:first-child{border-top:0}
+.row::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--dbd);flex:none;transform:translateY(-1px)}
+.row:hover{background:rgba(127,127,127,.08)}
+.row.sel{background:var(--tint);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.row .rn{margin-left:auto;color:var(--muted);font:500 11px var(--f-mono)}
+body.wiring,body.wiring .card,body.wiring .board{cursor:crosshair}
+body.ro .port,body.ro .kb.add,body.ro #add{display:none}
+body.ro .card{cursor:pointer}
+.empty{position:absolute;left:40px;top:40px;width:420px;max-width:calc(100vw - 80px);background:var(--panel);border:1px dashed var(--line);border-radius:4px;padding:18px 20px}
+.empty h2{margin:0 0 6px;font-size:16px;font-weight:600}
+.empty p{margin:0;color:var(--muted);font-size:14px}
+.zoombar{position:absolute;right:12px;bottom:12px;z-index:6;display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:3px;box-shadow:0 2px 10px rgba(0,0,0,.08);cursor:default}
+.zb{border:0;background:transparent;min-width:30px;height:28px;border-radius:3px;font:500 16px/1 var(--f-mono);cursor:pointer;color:var(--fg);padding:0 6px}
+.zb:hover{background:var(--bg)}
+.zb.fit{font-size:12px;padding:0 9px;border-left:1px solid var(--line);border-radius:0 3px 3px 0}
+#zsel{border:0;background:transparent;font:500 12px var(--f-mono);padding:4px 2px;cursor:pointer;color:var(--fg);font-variant-numeric:tabular-nums}
+#zsel option{background:var(--panel);color:var(--fg)}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.swatch{width:26px;height:26px;border-radius:50%;background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--fg)}
+.swatch:disabled{cursor:default;opacity:.6}
+.swatch.none{background:var(--card) linear-gradient(135deg,transparent 44%,var(--muted) 44%,var(--muted) 56%,transparent 56%)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:auto;min-width:0}
+#pbody{padding:16px;display:grid;gap:14px}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.ends{font-size:15px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;margin:0}
+.ends span{color:var(--muted);font-weight:400}
+.field{display:grid;gap:5px;min-width:0}
+.lab{font:500 11px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.field input,.field textarea{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:7px 8px;font-size:14px}
+.field input:disabled,.field textarea:disabled{opacity:.8;cursor:default}
+.field textarea{resize:vertical;min-height:84px;line-height:1.45}
+.seg{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg label{flex:1;position:relative}
+.seg input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.seg input:disabled{cursor:default}
+.seg span{display:block;text-align:center;padding:6px 2px;font:500 13px var(--f-mono);border-left:1px solid var(--line)}
+.seg label:first-child span{border-left:0}
+.seg input:checked+span{background:var(--fg);color:var(--panel)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:-2px}
+.hint{margin:0;font-size:13px;color:var(--muted)}
+.hint a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;cursor:pointer}
+kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;background:var(--paper);color:var(--fg)}
+.steps{margin:0;padding-left:18px;display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.sub{margin:4px 0 0;font-size:14px;font-weight:600;padding-top:12px;border-top:1px solid var(--line)}
+.picked{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:13px}
+.picked li{display:flex;gap:8px;align-items:center;min-width:0}
+.picked .cd{width:10px;height:10px;border-radius:50%;background:var(--c,var(--line));flex:none}
+.picked span{overflow-wrap:anywhere}
+.conn{display:grid;gap:6px}
+.crow{display:flex;align-items:center;gap:8px;font-size:13px;line-height:1.4}
+.crow .cd{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;align-self:flex-start;margin-top:4px}
+.crow .cd.sq{width:8px;height:8px;margin:6px 2px 0;background:color-mix(in srgb,var(--c,var(--desat)) 50%,var(--desat))}
+.crow .ct{display:grid;gap:1px;min-width:0}
+.crow .cn{font-size:12px;line-height:1.4;color:var(--muted);overflow-wrap:anywhere}
+.crow a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;cursor:pointer;min-width:0;overflow-wrap:anywhere}
+.crow .cw{margin-left:auto;align-self:flex-start;border:1px solid var(--line);background:var(--paper);border-radius:3px;font:500 11px var(--f-mono);color:var(--muted);white-space:nowrap;cursor:pointer;padding:2px 6px}
+.crow .cw:hover{color:var(--fg);border-color:var(--muted)}
+@media (max-width:760px){
+ .app{height:auto;min-height:100%}
+ .main{display:flex;flex-direction:column}
+ .board{height:62vh;flex:none}
+ .panel{overflow:visible}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .15s}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>ODP Idea Map</h1><span class="mono">Kadirana · Task 02</span></div>
+    <div class="grow"></div>
+    <span class="status idle" id="status" role="status">Connecting…</span>
+    <span class="who" id="who" hidden></span>
+    <button class="btn quiet" id="signout" type="button" hidden>Sign out</button>
+    <button class="btn quiet" id="backup" type="button" hidden>Save backup</button>
+    <button class="btn quiet" id="restore" type="button" hidden>Open backup</button>
+    <input type="file" id="restore-file" accept=".json,application/json" hidden>
+    <button class="btn primary" id="signin" type="button" hidden>Sign in with Google</button>
+    <button class="btn primary" id="add" type="button" disabled>Add point</button>
+  </header>
+  <main class="main">
+    <section class="board" id="board" tabindex="-1" aria-label="Idea map">
+      <div id="canvas">
+        <svg id="links" aria-hidden="true"></svg>
+        <svg id="wiresvg" aria-hidden="true"><line id="wire" class="wire" x1="0" y1="0" x2="0" y2="0" visibility="hidden"/></svg>
+        <div class="empty" id="empty">
+          <h2>Loading the shared map…</h2>
+          <p>This takes a moment.</p>
+        </div>
+      </div>
+      <div class="zoombar" aria-label="Zoom">
+        <button class="zb" id="zout" type="button" aria-label="Zoom out" title="Zoom out (Ctrl -)">−</button>
+        <select id="zsel" aria-label="Zoom level"></select>
+        <button class="zb" id="zin" type="button" aria-label="Zoom in" title="Zoom in (Ctrl +)">+</button>
+        <button class="zb fit" id="zfit" type="button" title="Show all cards">Fit</button>
+      </div>
+    </section>
+    <aside class="panel" aria-label="Details"><div id="pbody"></div></aside>
+  </main>
+</div>
+
+<script>
+const KEY="odp-idea-map";
+const COLORS=["grey","red","orange","yellow","green","teal","blue","purple"];
+const WEIGHTS=[1,2,3,4,5];
+const DEFAULT_WEIGHT=3;
+const CARD={1:[168,1,13],2:[186,1,14],3:[204,1.5,14.5],4:[226,2,15.5],5:[248,3,17]};
+const ZMIN=0.1,ZMAX=3,PRESETS=[10,25,50,75,100,125,150,200,300];
+const TEXT_PAUSE=500,MAX_WRITES=4;
+
+let points=new Map(),links=new Map();
+let sel=new Set(),selLink=null,drag=null,wire=null,pan=null,mq=null;
+let lastColor="grey";
+const undo=[];
+const view={x:0,y:0,z:1};
+let hadView=false,fitted=false;
+
+/* shared state */
+/* `db` is the small store API that startShared() is handed (Firestore, through the module script at the end) */
+let db=null,canWriteKnown=null,unsubs=[];
+let readOnly=false,offline=false,unconfigured=false,notMember=false,live=false,slow=false;
+const latest={points:null,links:null},loaded={points:false,links:false},remoteIds={points:new Set(),links:new Set()};
+const roCollapsed=new Map();
+let held=false,lastSig="",panelStale=false,panelPointer=false,pendingRestore=null;
+let failMsg="",flashUntil=0,flashT=0;
+
+const $=s=>document.querySelector(s);
+const bd=$("#board"),cv=$("#canvas");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pw=p=>WEIGHTS.includes(+p.weight)?+p.weight:3;
+const lw=l=>WEIGHTS.includes(+l.weight)?+l.weight:3;
+const lc=l=>COLORS.includes(l.color)?l.color:"grey";
+const pcol=p=>COLORS.includes(p.color)?p.color:"";
+const titleOf=id=>{const p=points.get(id);return(p&&p.title)||"Untitled"};
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const okId=id=>typeof id==="string"&&/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(id)&&id!=="."&&id!=="..";
+const snap=n=>Math.round(n/10)*10;
+const one=()=>sel.size===1?[...sel][0]:null;
+const cardEl=id=>cv.querySelector('.card[data-id="'+CSS.escape(id)+'"]');
+const anyEl=id=>cv.querySelector('[data-id="'+CSS.escape(id)+'"]');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}};
+/* drop-down items: a point with `parent` is an item in that card's list (one level only) */
+const parentOf=p=>p&&p.parent&&p.parent!==p.id&&points.has(p.parent)&&!points.get(p.parent).parent?points.get(p.parent):null;
+const kidsOf=id=>[...points.values()].filter(q=>q.parent===id&&parentOf(q)).sort((a,b)=>(a.o??1e9)-(b.o??1e9)||(+a.y||0)-(+b.y||0));
+const isHidden=p=>{const par=parentOf(p);return!!(par&&par.collapsed)};
+const visId=id=>{const p=points.get(id);if(!p)return null;return isHidden(p)?p.parent:id};
+const isCard=id=>{const p=points.get(id);return!!p&&!parentOf(p)};
+
+/* ---------- status line ---------- */
+function setStatus(text,kind){const s=$("#status");s.textContent=text;s.className="status"+(kind?" "+kind:"")}
+function flash(text,warn){flashUntil=Date.now()+4000;setStatus(text,warn?"warn":"");clearTimeout(flashT);flashT=setTimeout(refreshStatus,4100)}
+function refreshStatus(){
+  if(Date.now()<flashUntil)return;
+  if(unconfigured){setStatus("No database set up","warn");return}
+  if(offline){setStatus("Not signed in","idle");return}
+  if(!db){setStatus("Connecting…","idle");return}
+  if(notMember){setStatus("No access","warn");return}
+  if(readOnly){setStatus("View only","idle");return}
+  if(failMsg){setStatus(failMsg,"warn");return}
+  if([...W.values()].some(s=>s.busy||s.op)){setStatus("Saving…","idle");return}
+  if(!live){setStatus(slow?"Can't reach the shared map":"Connecting…",slow?"warn":"idle");return}
+  setStatus("Saved for everyone");
+}
+
+/* ---------- writing to the shared map ----------
+   One write at a time per document, text edits coalesced into one write per pause,
+   at most MAX_WRITES writes in flight in total. */
+const W=new Map();
+let active=0;const waiting=new Set();
+function clean(o){const r={};for(const k in o){if(k==="id")continue;const v=o[k];if(v===undefined)continue;r[k]=v}return r}
+function put(col,id,data){queue(col+"/"+id,"set",clean(data),0)}
+function patch(col,id,data,delay){queue(col+"/"+id,"update",clean(data),delay||0)}
+function drop(col,id){queue(col+"/"+id,"delete",null,0)}
+function queue(path,t,data,delay){
+  if(!db||readOnly)return;
+  let s=W.get(path);if(!s){s={busy:false,op:null,inflight:null,timer:0};W.set(path,s)}
+  const o=s.op;
+  if(t==="update"){
+    if(o&&o.t==="delete")return;
+    if(o)o.data={...o.data,...data};else s.op={t,data};
+  }else s.op={t,data};
+  clearTimeout(s.timer);s.timer=0;
+  if(delay)s.timer=setTimeout(()=>{s.timer=0;pump(path)},delay);else pump(path);
+  refreshStatus();
+}
+function flushAll(){for(const [path,s] of W)if(s.timer){clearTimeout(s.timer);s.timer=0;pump(path)}}
+async function pump(path){
+  const s=W.get(path);if(!s||s.busy||!s.op||s.timer)return;
+  if(active>=MAX_WRITES){waiting.add(path);return}
+  waiting.delete(path);
+  const op=s.op;s.op=null;s.busy=true;s.inflight=op;active++;
+  try{await write(path,op);failMsg=""}
+  catch(e){onWriteError(path,op,e)}
+  active--;s.busy=false;s.inflight=null;
+  if(s.op&&!s.timer)pump(path);
+  else if(!s.op&&!s.timer)W.delete(path);
+  for(const p of [...waiting]){if(active>=MAX_WRITES)break;waiting.delete(p);pump(p)}
+  refreshStatus();
+}
+const FINAL=["denied","missing","invalid_argument","quota_exceeded","revoked","resource_exhausted","not_granted","capability_disabled","capability_removed","transform_error"];
+async function write(path,op,retried){
+  const ref=db.doc(path);
+  try{
+    if(op.t==="set")await ref.set(op.data);
+    else if(op.t==="update")await ref.update(op.data);
+    else await ref.delete();
+  }catch(e){
+    if(!retried&&!(e&&FINAL.includes(e.code))){await wait(400+Math.random()*600);return write(path,op,true)}
+    throw e;
+  }
+}
+function onWriteError(path,op,e){
+  const code=e&&e.code,i=path.indexOf("/"),col=path.slice(0,i),id=path.slice(i+1);
+  if(code==="missing")return; /* someone else deleted it meanwhile */
+  if(code==="denied"){goReadOnly();return}
+  if(code==="invalid_argument"||code==="transform_error"){
+    const known=remoteIds[col]&&remoteIds[col].has(id);
+    if(op.t==="update"&&!known)return; /* someone else deleted it meanwhile */
+    if(canWriteKnown===true){failMsg="A change was refused. Reload the page and try again.";return}
+    goReadOnly();return;
+  }
+  if(code==="revoked"||code==="not_granted"||code==="capability_disabled"||code==="capability_removed"){goReadOnly();return}
+  if(code==="quota_exceeded"){failMsg="The shared map is full. Delete some cards to add more.";return}
+  if(code==="resource_exhausted"){failMsg="Too many changes at once. Wait a moment, then carry on.";return}
+  failMsg="A change didn't save. Check your connection.";
+}
+function goReadOnly(){
+  if(readOnly)return;
+  readOnly=true;W.clear();waiting.clear();
+  document.body.classList.add("ro");$("#restore").hidden=true;
+  sync(true);refreshStatus();
+}
+
+/* ---------- reading the shared map ---------- */
+function rebuild(col){
+  const s=latest[col];if(!s)return;
+  const m=new Map(),ids=new Set();
+  for(const d of s.docs){const v=d.data();if(!v)continue;ids.add(d.id);m.set(d.id,{...v,id:d.id})}
+  remoteIds[col]=ids;
+  for(const [path,q] of W){
+    const i=path.indexOf("/");if(path.slice(0,i)!==col)continue;const id=path.slice(i+1);
+    for(const op of [q.inflight,q.op]){
+      if(!op)continue;
+      if(op.t==="delete")m.delete(id);
+      else if(op.t==="set")m.set(id,{...op.data,id});
+      else{const c=m.get(id);if(c)m.set(id,{...c,...op.data})}
+    }
+  }
+  if(col==="points"){
+    for(const [id,c] of roCollapsed){const p=m.get(id);if(p)m.set(id,{...p,collapsed:c})}
+    points=m;
+  }else{
+    for(const [id,l] of m)if(!l||!l.from||!l.to)m.delete(id);
+    links=m;
+  }
+}
+function sync(force){
+  if(!force&&(drag||wire||mq)){held=true;return}
+  held=false;
+  rebuild("points");rebuild("links");
+  sel=new Set([...sel].filter(i=>points.has(i)&&!isHidden(points.get(i))));
+  if(selLink&&!links.has(selLink))selLink=null;
+  renderBoard();
+  if(!fitted&&!hadView&&points.size){fitted=true;fitView()}
+  if(force||panelSig()!==lastSig){if(editingPanel()&&!force)panelStale=true;else renderPanel()}
+  refreshStatus();
+}
+let tries=0;
+function listen(col){
+  const api=db;
+  unsubs.push(api.collection(col).onSnapshot(snap=>{
+    if(db!==api)return;
+    latest[col]=snap;
+    if(!snap.metadata.fromCache)loaded[col]=true;
+    if(loaded.points&&loaded.links&&!live){live=true;slow=false;clearTimeout(slowT)}
+    sync();
+  },err=>{
+    if(db!==api)return;
+    loaded[col]=true;clearTimeout(slowT);
+    const code=err&&err.code;
+    if(code==="denied"){notMember=true;points=new Map();links=new Map();sel=new Set();selLink=null;document.body.classList.add("ro");render();refreshStatus();return}
+    if(code==="unavailable"&&tries<3){tries++;setTimeout(()=>{if(db===api)listen(col)},3000+Math.random()*2000);return}
+    failMsg="Lost the connection to the shared map. Reload the page to reconnect.";refreshStatus();renderEmpty();
+  }));
+}
+let slowT=0;
+function subscribe(){
+  slowT=setTimeout(()=>{if(!live){slow=true;refreshStatus();renderEmpty()}},10000);
+  listen("points");listen("links");
+}
+/* a fingerprint of what the side panel shows, so remote changes only redraw it when they matter */
+const sj=o=>o?JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k]])):"-";
+function panelSig(){
+  if(pendingRestore)return "R";
+  if(selLink){const l=links.get(selLink);return "L"+sj(l)+(l?titleOf(l.from)+"|"+titleOf(l.to):"")}
+  if(sel.size>1)return "M"+[...sel].map(i=>sj(points.get(i))).join();
+  const id=one();if(!id)return "N"+readOnly;
+  const p=points.get(id),par=parentOf(p);
+  const kids=par?kidsOf(par.id):kidsOf(id);
+  const ls=[...links.values()].filter(l=>l.from===id||l.to===id).map(l=>sj(l)+titleOf(l.from===id?l.to:l.from));
+  return "P"+sj(p)+(par?"^"+(par.title||""):"")+kids.map(k=>k.id+":"+(k.title||"")+":"+(k.note?1:0)).join()+ls.join()+readOnly;
+}
+function editingPanel(){const a=document.activeElement;return!!(a&&a.closest&&a.closest("#pbody")&&((a.tagName==="INPUT"&&a.type!=="radio")||a.tagName==="TEXTAREA"))}
+function catchUpPanel(){setTimeout(()=>{if(panelStale&&!editingPanel()&&!panelPointer){panelStale=false;renderPanel()}},250)}
+
+/* ---------- this viewer's own view (pan, zoom, last colour) ---------- */
+const clampZ=z=>Math.min(ZMAX,Math.max(ZMIN,z));
+function loadView(){
+  try{const v=JSON.parse(lsGet(KEY+"-view")||"null");if(v&&isFinite(v.x)&&isFinite(v.y)&&isFinite(v.z)){view.x=v.x;view.y=v.y;view.z=clampZ(v.z);hadView=true}}catch(_){}
+  const c=lsGet(KEY+"-color");if(COLORS.includes(c))lastColor=c;
+}
+let viewT=0;
+function saveView(){clearTimeout(viewT);viewT=setTimeout(()=>lsSet(KEY+"-view",JSON.stringify(view)),300)}
+function setLastColor(c){if(COLORS.includes(c)){lastColor=c;lsSet(KEY+"-color",c)}}
+function applyView(){
+  cv.style.transform="translate("+view.x+"px,"+view.y+"px) scale("+view.z+")";
+  const a=100*view.z,b=20*view.z,p=view.x+"px "+view.y+"px";
+  bd.style.backgroundSize=a+"px "+a+"px,"+a+"px "+a+"px,"+b+"px "+b+"px,"+b+"px "+b+"px";
+  bd.style.backgroundPosition=p+","+p+","+p+","+p;
+  updateZoomSel();saveView();
+}
+function zoomAt(nz,cx,cy){nz=clampZ(nz);const k=nz/view.z;view.x=cx-(cx-view.x)*k;view.y=cy-(cy-view.y)*k;view.z=nz;applyView()}
+function zoomCenter(nz){zoomAt(nz,bd.clientWidth/2,bd.clientHeight/2)}
+function zoomStep(dir){
+  const pct=Math.round(view.z*100);
+  const next=dir>0?PRESETS.find(p=>p>pct+1):[...PRESETS].reverse().find(p=>p<pct-1);
+  zoomCenter((next||(dir>0?ZMAX*100:ZMIN*100))/100);
+}
+function updateZoomSel(){
+  const s=$("#zsel");if(document.activeElement===s)return;
+  const pct=Math.round(view.z*100);
+  const opts=PRESETS.includes(pct)?PRESETS:[...PRESETS,pct].sort((a,b)=>a-b);
+  s.innerHTML=opts.map(p=>'<option value="'+p+'"'+(p===pct?" selected":"")+'>'+p+'%</option>').join("");
+}
+function cardExtents(){
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const el of cv.querySelectorAll(".card")){
+    const dr=el.querySelector(".drawer"),h=el.offsetHeight+(dr?dr.offsetHeight:0);
+    x0=Math.min(x0,el.offsetLeft);y0=Math.min(y0,el.offsetTop);x1=Math.max(x1,el.offsetLeft+el.offsetWidth);y1=Math.max(y1,el.offsetTop+h);
+  }
+  return{x0,y0,x1,y1};
+}
+function fitView(){
+  const W_=bd.clientWidth,H=bd.clientHeight;
+  if(!points.size||!W_||!H){view.x=0;view.y=0;view.z=1;applyView();return}
+  const {x0,y0,x1,y1}=cardExtents();
+  const pad=60,z=clampZ(Math.min(1,(W_-pad*2)/Math.max(1,x1-x0),(H-pad*2)/Math.max(1,y1-y0)));
+  view.z=z;view.x=(W_-(x1-x0)*z)/2-x0*z;view.y=(H-(y1-y0)*z)/2-y0*z;applyView();
+}
+function pt(e){const r=bd.getBoundingClientRect();return{x:(e.clientX-r.left-view.x)/view.z,y:(e.clientY-r.top-view.y)/view.z}}
+
+/* ---------- drawing ---------- */
+function render(){renderBoard();renderPanel()}
+
+function renderEmpty(){
+  const e=$("#empty");let h,t;
+  if(unconfigured){h="Not connected yet";t="This copy of the map has no database set up, so it can't show or save anything."}
+  else if(offline){h="Sign in to see the map";t="Press Sign in with Google at the top, and use the Google account your group added to the map."}
+  else if(notMember){h="This account can't open the map";t="Sign out and use the Google account your group added, or ask whoever runs the map to add this one."}
+  else if(!live&&!points.size){h=slow?"Can't reach the shared map yet":"Loading the shared map…";t=slow?"Check your connection. The map shows up as soon as it loads.":"This takes a moment."}
+  else{h="No points yet";t=readOnly?"Nothing has been added to this map yet.":"Press Add point, or double-click anywhere on the board, to make your first card."}
+  e.querySelector("h2").textContent=h;e.querySelector("p").textContent=t;
+  e.hidden=points.size>0;
+}
+
+function renderBoard(){
+  cv.querySelectorAll(".card").forEach(n=>n.remove());
+  for(const p of points.values()){
+    if(parentOf(p))continue;
+    const w=pw(p),pc=pcol(p),x=+p.x||0,y=+p.y||0,[cw,bw,fs]=CARD[w];
+    const kids=kidsOf(p.id),open=kids.length&&!p.collapsed;
+    const el=document.createElement("div");
+    el.className="card"+(sel.has(p.id)?" sel":"")+(w>=4?" strong":"")+(w===1?" faint":"")+(pc?" tinted":"")+(open?" open":"")+(kids.length?" has-kids":"");
+    el.dataset.id=p.id;el.tabIndex=0;el.setAttribute("role","button");
+    el.setAttribute("aria-label",(p.title||"Untitled")+", weight "+w+(pc?", "+pc:"")+(kids.length?", "+kids.length+" items":""));
+    el.style.cssText="left:"+x+"px;top:"+y+"px;--cw:"+cw+"px;--bw:"+bw+"px;--fs:"+fs+"px"+(pc?";--cc:var(--c-"+pc+")":"");
+    el.innerHTML='<div class="wd" aria-hidden="true">'+"●".repeat(w)+"○".repeat(5-w)+'</div><h3>'+esc(p.title||"Untitled")+'</h3>'+(p.note?'<p>'+esc(p.note)+'</p>':'')+
+      '<span class="port l" title="Drag onto another card to connect"></span><span class="port" title="Drag onto another card to connect"></span>'+
+      '<div class="kidbar">'+(kids.length?'<button class="kb tog" type="button" data-act="toggle" title="'+(p.collapsed?"Open":"Close")+' the list">'+(p.collapsed?"▸":"▾")+' '+kids.length+'</button>':'')+
+      '<button class="kb add" type="button" data-act="addkid" title="Add an item to this card\'s list" aria-label="Add an item">+</button></div>'+
+      (open?'<div class="drawer">'+kids.map(k=>'<div class="row'+(sel.has(k.id)?" sel":"")+'" data-id="'+esc(k.id)+'" data-row="1">'+esc(k.title||"Untitled")+(String(k.note||"").trim()?'<span class="rn" title="Has a note">✎</span>':'')+'</div>').join("")+
+        '</div>':'');
+    cv.appendChild(el);
+  }
+  renderEmpty();
+  drawLinks();
+}
+
+function box(id){
+  const el=anyEl(id);if(!el)return null;
+  let x,y,w,h;
+  if(el.classList.contains("card")){x=el.offsetLeft;y=el.offsetTop;w=el.offsetWidth;h=el.offsetHeight}
+  else{const r=el.getBoundingClientRect(),c=cv.getBoundingClientRect();x=(r.left-c.left)/view.z;y=(r.top-c.top)/view.z;w=r.width/view.z;h=r.height/view.z}
+  return{x,y,w,h,cx:x+w/2,cy:y+h/2};
+}
+function route(a,b){
+  const A=[[a.x,a.cy,-1],[a.x+a.w,a.cy,1]],B=[[b.x,b.cy,-1],[b.x+b.w,b.cy,1]];
+  let best=null;
+  for(const pa of A)for(const pb of B){const d=Math.hypot(pa[0]-pb[0],pa[1]-pb[1]);if(!best||d<best.d-0.5)best={d,pa,pb}}
+  const [x1,y1,d1]=best.pa,[x2,y2,d2]=best.pb;
+  const k=Math.max(40,Math.min(180,Math.abs(x2-x1)/2))+(d1===d2?30:0);
+  const c1=x1+d1*k,c2=x2+d2*k,f=n=>n.toFixed(1);
+  return{d:"M"+f(x1)+" "+f(y1)+"C"+f(c1)+" "+f(y1)+" "+f(c2)+" "+f(y2)+" "+f(x2)+" "+f(y2),mx:(x1+3*c1+3*c2+x2)/8,my:(y1+y2)/2};
+}
+function sizeSvgs(){
+  let {x0,y0,x1,y1}=cardExtents();
+  if(!isFinite(x0)){x0=0;y0=0;x1=1200;y1=800}
+  const P=3000;x0-=P;y0-=P;x1+=P;y1+=P;
+  const w=x1-x0,h=y1-y0;
+  for(const s of [$("#links"),$("#wiresvg")]){s.style.left=x0+"px";s.style.top=y0+"px";s.setAttribute("width",w);s.setAttribute("height",h);s.setAttribute("viewBox",x0+" "+y0+" "+w+" "+h)}
+}
+function drawLinks(){
+  sizeSvgs();
+  const svg=$("#links");
+  let out="";
+  for(const l of links.values()){
+    const fa=visId(l.from),tb=visId(l.to);if(!fa||!tb||fa===tb)continue;
+    const a=box(fa),b=box(tb);if(!a||!b)continue;
+    const rt=route(a,b);
+    const c=lc(l),w=lw(l),sw=1+(w-1)*1.2,via=fa!==l.from||tb!==l.to;
+    const on=l.id===selLink;
+    const hl=(sel.has(l.from)||sel.has(l.to)||sel.has(fa)||sel.has(tb)||on)?" hl":"";
+    const co='d="'+rt.d+'"';
+    const tip='<title>'+esc(titleOf(l.from)+" and "+titleOf(l.to)+", weight "+w+(via?" (through a closed list)":"")+(l.note?"\n"+l.note:""))+'</title>';
+    out+=(on?'<path '+co+' class="halo" stroke-width="'+(sw+8).toFixed(1)+'"/>':'')+
+      '<path '+co+' class="ln'+(via?" via":"")+hl+'" style="stroke:var(--c-'+c+')" stroke-width="'+sw.toFixed(1)+'"/>'+
+      '<path '+co+' class="hit" data-link="'+esc(l.id)+'">'+tip+'</path>'+
+      (l.note?'<circle class="nd'+hl+'" data-link="'+esc(l.id)+'" cx="'+rt.mx.toFixed(1)+'" cy="'+rt.my.toFixed(1)+'" r="'+(on?6:5)+'" style="fill:var(--c-'+c+')">'+tip+'</circle>':'');
+  }
+  svg.innerHTML=out;
+  svg.classList.toggle("has-sel",!!(sel.size||selLink));
+}
+
+/* ---------- selection ---------- */
+function select(id){sel=new Set(id&&points.has(id)?[id]:[]);selLink=null;pendingRestore=null;render()}
+function selectMany(ids){sel=new Set(ids.filter(isCard));selLink=null;pendingRestore=null;render()}
+function toggleSel(id){const s=new Set([...sel].filter(isCard));if(s.has(id))s.delete(id);else s.add(id);sel=s;selLink=null;pendingRestore=null;render()}
+function selectLink(id){selLink=id&&links.has(id)?id:null;sel=new Set();pendingRestore=null;render()}
+function goTo(id){const p=points.get(id);if(!p)return;const par=parentOf(p);if(par&&par.collapsed)setCollapsed(par.id,false);select(id)}
+
+/* ---------- drop-down items ---------- */
+function setCollapsed(pid,c){
+  const p=points.get(pid);if(!p||!!p.collapsed===c)return;
+  points.set(pid,{...p,collapsed:c});
+  if(readOnly)roCollapsed.set(pid,c);else patch("points",pid,{collapsed:c});
+}
+function reorder(list,skip){list.forEach((k,i)=>{const q=points.get(k.id);if(q&&q.o!==i){points.set(k.id,{...q,o:i});if(k.id!==skip)patch("points",k.id,{o:i})}})}
+function addKid(pid,afterId){
+  if(readOnly)return;
+  const par=points.get(pid);if(!par||parentOf(par))return;
+  setCollapsed(pid,false);
+  const list=kidsOf(pid);
+  const id=newId(),item={id,title:"New item",note:"",parent:pid};
+  const at=afterId?list.findIndex(k=>k.id===afterId)+1:list.length;
+  list.splice(at>0?at:list.length,0,item);
+  points.set(id,item);reorder(list,id);put("points",id,points.get(id));
+  select(id);
+  const t=$("#f-title");if(t){t.focus();t.select()}
+}
+function moveKid(id,dir){
+  if(readOnly)return;
+  const p=points.get(id),par=parentOf(p);if(!par)return;
+  const list=kidsOf(par.id),i=list.findIndex(k=>k.id===id),j=i+dir;
+  if(i<0||j<0||j>=list.length)return;
+  [list[i],list[j]]=[list[j],list[i]];reorder(list);render();
+}
+function toggleKids(pid){
+  const p=points.get(pid);if(!p)return;
+  setCollapsed(pid,!p.collapsed);
+  sel=new Set([...sel].filter(i=>{const q=points.get(i);return q&&!isHidden(q)}));
+  render();
+}
+
+/* ---------- side panel ---------- */
+function weightSeg(name,cur,label){
+  return '<div class="seg" role="radiogroup" aria-label="'+label+'">'+WEIGHTS.map(n=>'<label><input type="radio" name="'+name+'" value="'+n+'"'+(n===cur?" checked":"")+'><span>'+n+'</span></label>').join("")+'</div>';
+}
+function swatchRow(id,cur,withNone){
+  return '<div class="swatches" id="'+id+'">'+
+    (withNone?'<button type="button" class="swatch none" data-c="" aria-label="No colour" aria-pressed="'+(cur===""||cur===undefined)+'"></button>':'')+
+    COLORS.map(c=>'<button type="button" class="swatch" style="--c:var(--c-'+c+')" data-c="'+c+'" aria-label="'+c+'" aria-pressed="'+(c===cur)+'"></button>').join("")+'</div>';
+}
+function wireSwatches(root,fn){root.querySelectorAll(".swatch").forEach(b=>b.addEventListener("click",()=>{fn(b.dataset.c);root.querySelectorAll(".swatch").forEach(s=>s.setAttribute("aria-pressed",String(s===b)))}))}
+function lockPanel(pb){
+  if(!readOnly)return;
+  pb.querySelectorAll("input,textarea,.swatch,.seg input,#kadd,#kup,#kdn").forEach(el=>el.disabled=true);
+  pb.querySelectorAll("#pdel,#ldel,#mdel").forEach(el=>el.hidden=true);
+}
+
+function renderPanel(){
+  panelStale=false;
+  const pb=$("#pbody");
+  if(pendingRestore){
+    const v=pendingRestore,np=Object.keys(v.points).length,nl=Object.keys(v.links).length;
+    pb.innerHTML=
+      '<span class="lab">Open backup</span>'+
+      '<p class="ends">Replace the shared map with this backup?</p>'+
+      '<p class="hint">The backup has '+np+' cards and items and '+nl+' connections. Everyone with the link sees the change straight away, and it can\'t be undone with Ctrl+Z.</p>'+
+      '<div class="ph"><button class="btn primary" id="rok" type="button">Replace the map</button><button class="btn" id="rno" type="button">Cancel</button></div>';
+    $("#rok").addEventListener("click",()=>{const b=pendingRestore;pendingRestore=null;replaceAll(b)});
+    $("#rno").addEventListener("click",()=>{pendingRestore=null;renderPanel()});
+    lastSig=panelSig();return;
+  }
+  const l=selLink&&links.get(selLink);
+  if(l){
+    pb.innerHTML=
+      '<div class="ph"><span class="lab">Connection</span><button class="btn" id="ldel" type="button">Delete</button></div>'+
+      '<div class="ends">'+esc(titleOf(l.from))+' <span>and</span> '+esc(titleOf(l.to))+'</div>'+
+      '<div class="field"><label class="lab" for="l-note">Note</label><textarea id="l-note" rows="3" placeholder="How are these two connected?">'+esc(l.note||"")+'</textarea></div>'+
+      '<div class="field"><span class="lab">Colour</span>'+swatchRow("l-colour",lc(l),false)+'</div>'+
+      '<div class="field"><span class="lab">Weight</span>'+weightSeg("l-weight",lw(l),"Connection weight")+'<span class="hint">How strong the connection is. Thicker line = stronger.</span></div>'+
+      (readOnly?'':'<p class="hint">Press <kbd>Delete</kbd> to remove this connection.</p>');
+    const id=l.id;
+    $("#l-note").addEventListener("input",e=>updateLink(id,{note:e.target.value},TEXT_PAUSE));
+    wireSwatches($("#l-colour"),c=>{setLastColor(c);updateLink(id,{color:c})});
+    pb.querySelectorAll('input[name="l-weight"]').forEach(r=>r.addEventListener("change",()=>updateLink(id,{weight:+r.value})));
+    $("#ldel").addEventListener("click",()=>deleteLink(id));
+    lockPanel(pb);lastSig=panelSig();return;
+  }
+  if(sel.size>1){
+    const ps=[...sel].map(i=>points.get(i)).filter(p=>p&&!parentOf(p));
+    const cols=new Set(ps.map(pcol)),ws=new Set(ps.map(pw));
+    const cur=cols.size===1?[...cols][0]:null,curW=ws.size===1?[...ws][0]:null;
+    const shown=ps.slice(0,8);
+    pb.innerHTML=
+      '<div class="ph"><span class="lab">'+ps.length+' points selected</span><button class="btn" id="mdel" type="button">Delete all</button></div>'+
+      '<ul class="picked">'+shown.map(p=>'<li><i class="cd" style="'+(pcol(p)?'--c:var(--c-'+pcol(p)+')':'')+'"></i><span>'+esc(p.title||"Untitled")+'</span></li>').join("")+(ps.length>shown.length?'<li><span class="hint">and '+(ps.length-shown.length)+' more</span></li>':'')+'</ul>'+
+      '<div class="field"><span class="lab">Colour for all</span>'+swatchRow("m-colour",cur,true)+'</div>'+
+      '<div class="field"><span class="lab">Weight for all</span>'+weightSeg("m-weight",curW,"Weight for all")+'</div>'+
+      (readOnly?'':'<p class="hint">Drag any of them to move them together. <kbd>Shift</kbd>+click a card to add or remove it. <kbd>Delete</kbd> removes them all.</p>');
+    const ids=ps.map(p=>p.id);
+    wireSwatches($("#m-colour"),c=>{ids.forEach(i=>savePoint(i,{color:c}));renderBoard()});
+    pb.querySelectorAll('input[name="m-weight"]').forEach(r=>r.addEventListener("change",()=>{ids.forEach(i=>savePoint(i,{weight:+r.value}));renderBoard()}));
+    $("#mdel").addEventListener("click",()=>deletePoints(ids));
+    lockPanel(pb);lastSig=panelSig();return;
+  }
+  const p=one()&&points.get(one());
+  if(!p){
+    pb.innerHTML=(readOnly?'<span class="lab">View only</span><p class="hint">You can move around this map and read every card, but you can\'t change it. Ask the map\'s owner to make you an editor.</p>':
+      '<span class="lab">How it works</span><ol class="steps">'+
+      '<li>Press Add point, or double-click the board, to make a card.</li>'+
+      '<li>Drag any empty part of the board to move around. Scroll to zoom in and out, or use the zoom bar at the bottom right. Fit shows all your cards.</li>'+
+      '<li>Click a card to write its title and note, give it a colour, and give it a weight from 1 to 5. Higher weights make bigger cards.</li>'+
+      '<li>Press <kbd>+</kbd> under a card to start a drop-down list of related items. <kbd>▾</kbd> opens or closes it. Click an item to edit it; <kbd>Enter</kbd> in its title adds the next one.</li>'+
+      '<li>Select several cards with <kbd>Shift</kbd>+click, or hold <kbd>Shift</kbd> and drag a box on the board. <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all. Drag any selected card to move them together.</li>'+
+      '<li>Hold <kbd>Ctrl</kbd> and drag a card to make a new card with the same size and colour.</li>'+
+      '<li>Drag from a dot on either side of a card onto another card to connect them.</li>'+
+      '<li>Click a line to write a note on it or change its colour or weight. A dot in the middle of a line means it has a note.</li>'+
+      '<li>Select a card, an item or a line and press <kbd>Delete</kbd> to remove it. <kbd>Ctrl</kbd>+<kbd>Z</kbd> brings back what you deleted.</li></ol>'+
+      '<p class="hint">Changes save by themselves and show up for everyone on the map.</p>');
+    lastSig=panelSig();return;
+  }
+  const par=parentOf(p),id=p.id;
+  if(par){
+    const list=kidsOf(par.id),i=list.findIndex(k=>k.id===id);
+    const hasLinks=[...links.values()].some(x=>x.from===id||x.to===id);
+    pb.innerHTML=
+      '<div class="ph"><span class="lab">List item</span><button class="btn" id="pdel" type="button">Delete</button></div>'+
+      '<p class="hint">In the list under <a data-go="'+esc(par.id)+'">'+esc(par.title||"Untitled")+'</a>.</p>'+
+      '<div class="field"><label class="lab" for="f-title">Item</label><input id="f-title" value="'+esc(p.title||"")+'" autocomplete="off">'+(readOnly?'':'<span class="hint">Press <kbd>Enter</kbd> to add the next item.</span>')+'</div>'+
+      '<div class="field"><label class="lab" for="f-note">Note</label><textarea id="f-note" rows="4">'+esc(p.note||"")+'</textarea></div>'+
+      '<div class="ph"><span class="lab">Order</span><span><button class="btn" id="kup" type="button"'+(i<=0?" disabled":"")+'>Move up</button> <button class="btn" id="kdn" type="button"'+(i>=list.length-1?" disabled":"")+'>Move down</button></span></div>'+
+      (hasLinks?'<h3 class="sub">Connections</h3><div class="conn" id="conn"></div>':'');
+    const t=$("#f-title");
+    t.addEventListener("input",e=>{savePoint(id,{title:e.target.value},TEXT_PAUSE);renderBoard()});
+    t.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addKid(par.id,id)}});
+    $("#f-note").addEventListener("input",e=>{savePoint(id,{note:e.target.value},TEXT_PAUSE);renderBoard()});
+    $("#kup").addEventListener("click",()=>moveKid(id,-1));
+    $("#kdn").addEventListener("click",()=>moveKid(id,1));
+    $("#pdel").addEventListener("click",()=>deletePoints([id]));
+    pb.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>goTo(a.dataset.go)));
+    renderConn();lockPanel(pb);lastSig=panelSig();
+    return;
+  }
+  const kids=kidsOf(id);
+  pb.innerHTML=
+    '<div class="ph"><span class="lab">Point</span><button class="btn" id="pdel" type="button">Delete</button></div>'+
+    '<div class="field"><label class="lab" for="f-title">Title</label><input id="f-title" value="'+esc(p.title||"")+'" autocomplete="off"></div>'+
+    '<div class="field"><label class="lab" for="f-note">Note</label><textarea id="f-note" rows="4">'+esc(p.note||"")+'</textarea></div>'+
+    '<div class="field"><span class="lab">Colour</span>'+swatchRow("f-colour",pcol(p),true)+'</div>'+
+    '<div class="field"><span class="lab">Weight</span>'+weightSeg("f-weight",pw(p),"Point weight")+'<span class="hint">5 is a main point, 1 is a side note.</span></div>'+
+    '<h3 class="sub">Drop-down list</h3><div class="conn" id="kids">'+
+      (kids.length?kids.map(k=>'<div class="crow"><i class="cd sq" style="'+(pcol(p)?'--c:var(--c-'+pcol(p)+')':'')+'"></i><div class="ct"><a data-go="'+esc(k.id)+'">'+esc(k.title||"Untitled")+'</a></div></div>').join(""):'<p class="hint">No items yet.</p>')+
+    '</div><div class="ph"><button class="btn" id="kadd" type="button">Add item</button>'+(kids.length?'<button class="btn quiet" id="ktog" type="button">'+(p.collapsed?"Open the list":"Close the list")+'</button>':'')+'</div>'+
+    '<h3 class="sub">Connections</h3><div class="conn" id="conn"></div>';
+  $("#f-title").addEventListener("input",e=>{savePoint(id,{title:e.target.value},TEXT_PAUSE);renderBoard()});
+  $("#f-note").addEventListener("input",e=>{savePoint(id,{note:e.target.value},TEXT_PAUSE);renderBoard()});
+  wireSwatches($("#f-colour"),c=>{savePoint(id,{color:c});renderBoard();document.querySelectorAll("#kids .cd").forEach(d=>{if(c)d.style.setProperty("--c","var(--c-"+c+")");else d.style.removeProperty("--c")})});
+  pb.querySelectorAll('input[name="f-weight"]').forEach(r=>r.addEventListener("change",e=>{savePoint(id,{weight:+e.target.value});renderBoard()}));
+  $("#pdel").addEventListener("click",()=>deletePoints([id]));
+  pb.querySelectorAll("#kids [data-go]").forEach(a=>a.addEventListener("click",()=>goTo(a.dataset.go)));
+  $("#kadd").addEventListener("click",()=>addKid(id));
+  const kt=$("#ktog");if(kt)kt.addEventListener("click",()=>toggleKids(id));
+  renderConn();lockPanel(pb);lastSig=panelSig();
+}
+
+function renderConn(){
+  const c=$("#conn"),id=one();if(!c||!id)return;
+  const rows=[...links.values()].filter(l=>(l.from===id||l.to===id)&&points.has(l.from)&&points.has(l.to)).sort((a,b)=>lw(b)-lw(a)).map(l=>{
+    const o=l.from===id?l.to:l.from;
+    const n=String(l.note||"").trim(),ns=n.length>90?n.slice(0,88)+"…":n;
+    return '<div class="crow"><i class="cd" style="--c:var(--c-'+lc(l)+')"></i><div class="ct"><a data-go="'+esc(o)+'">'+esc(titleOf(o))+'</a>'+(ns?'<span class="cn">'+esc(ns)+'</span>':'')+'</div><button class="cw" data-link-go="'+esc(l.id)+'" type="button" title="Open this connection">weight '+lw(l)+'</button></div>';
+  }).join("");
+  c.innerHTML=rows||'<p class="hint">'+(readOnly?'None yet.':'None yet. Drag from a dot on either side of this card onto another card.')+'</p>';
+  c.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>goTo(a.dataset.go)));
+  c.querySelectorAll("[data-link-go]").forEach(b=>b.addEventListener("click",()=>selectLink(b.dataset.linkGo)));
+}
+
+/* ---------- editing ---------- */
+function savePoint(id,ch,delay){if(readOnly)return;const p=points.get(id);if(!p)return;points.set(id,{...p,...ch});patch("points",id,ch,delay);lastSig=panelSig()}
+function createPoint(at){
+  if(readOnly||!db)return;
+  const x=at?snap(at.x-100):snap((bd.clientWidth/2-view.x)/view.z-100);
+  const y=at?snap(at.y-30):snap((bd.clientHeight/2-view.y)/view.z-50);
+  const id=newId(),p={id,title:"New point",note:"",weight:3,x,y};
+  points.set(id,p);put("points",id,p);select(id);
+  const t=$("#f-title");if(t){t.focus();t.select()}
+}
+function deletePoints(ids){
+  if(readOnly)return;
+  const all=new Set();
+  ids.forEach(i=>{const p=points.get(i);if(!p)return;all.add(i);if(!parentOf(p))kidsOf(i).forEach(k=>all.add(k.id))});
+  const ps=[...all].map(i=>points.get(i)).filter(Boolean);if(!ps.length)return;
+  const onlyItem=ps.length===1&&parentOf(ps[0])?ps[0]:null,back=onlyItem?onlyItem.parent:null;
+  const gone=[...links.values()].filter(l=>all.has(l.from)||all.has(l.to));
+  undo.push({points:ps,links:gone});if(undo.length>30)undo.shift();
+  gone.forEach(l=>{links.delete(l.id);drop("links",l.id)});ps.forEach(p=>{points.delete(p.id);drop("points",p.id)});
+  sel=new Set(back?[back]:[]);selLink=null;
+  flash((onlyItem?"Item":ps.length>1?ps.length+" cards and items":"Card")+" deleted. Press Ctrl+Z to undo");render();bd.focus({preventScroll:true});
+}
+function deleteLink(id){
+  if(readOnly)return;
+  const l=links.get(id);if(!l)return;
+  undo.push({points:[],links:[l]});if(undo.length>30)undo.shift();
+  links.delete(id);drop("links",id);if(selLink===id)selLink=null;
+  flash("Connection deleted. Press Ctrl+Z to undo");render();bd.focus({preventScroll:true});
+}
+function undoDelete(){
+  if(readOnly)return;
+  const u=undo.pop();if(!u){flash("Nothing to undo");return}
+  u.points.forEach(p=>{if(p.parent&&!points.has(p.parent)&&!u.points.some(q=>q.id===p.parent))return;points.set(p.id,p);put("points",p.id,p)});
+  u.links.forEach(l=>{if(points.has(l.from)&&points.has(l.to)){links.set(l.id,l);put("links",l.id,l)}});
+  if(u.points.length){const back=u.points.filter(p=>points.has(p.id));const main=back.filter(p=>isCard(p.id));sel=new Set((main.length?main:back).filter(p=>!isHidden(p)).map(p=>p.id));selLink=null}
+  else if(u.links.length&&links.has(u.links[0].id)){selLink=u.links[0].id;sel=new Set()}
+  flash("Restored");render();
+}
+function connect(from,to){
+  if(readOnly||from===to)return;
+  const existing=[...links.values()].find(l=>(l.from===from&&l.to===to)||(l.from===to&&l.to===from));
+  if(existing){selectLink(existing.id);return}
+  const id=newId(),l={id,from,to,color:lastColor,weight:DEFAULT_WEIGHT};
+  links.set(id,l);put("links",id,l);
+  selectLink(id);
+}
+function updateLink(id,ch,delay){if(readOnly)return;const l=links.get(id);if(!l)return;links.set(id,{...l,...ch});patch("links",id,ch,delay);lastSig=panelSig();drawLinks()}
+
+/* ---------- mouse ---------- */
+function cardAt(e){const el=document.elementFromPoint(e.clientX,e.clientY);return el?el.closest(".card"):null}
+
+bd.addEventListener("pointerdown",e=>{
+  if(e.target.closest(".zoombar"))return;
+  if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
+  const mid=e.button===1,mod=e.ctrlKey||e.metaKey;
+  const act=mid?null:e.target.closest("[data-act]");
+  if(act){
+    e.preventDefault();e.stopPropagation();
+    const id=act.closest(".card").dataset.id;
+    if(act.dataset.act==="addkid")addKid(id);else toggleKids(id);
+    return;
+  }
+  const port=mid||readOnly?null:e.target.closest(".port");
+  if(port){
+    e.preventDefault();
+    const id=port.closest(".card").dataset.id,b=box(id);if(!b)return;
+    wire={from:id,target:null};
+    const sx=port.classList.contains("l")?b.x:b.x+b.w;
+    const w=$("#wire");w.setAttribute("x1",sx);w.setAttribute("y1",b.cy);w.setAttribute("x2",sx);w.setAttribute("y2",b.cy);w.setAttribute("visibility","visible");
+    document.body.classList.add("wiring");
+    try{port.setPointerCapture(e.pointerId)}catch(_){}
+    return;
+  }
+  const hit=mid?null:e.target.closest("[data-link]");
+  if(hit){e.preventDefault();selectLink(hit.dataset.link);bd.focus({preventScroll:true});return}
+  const el=mid?null:e.target.closest(".card");
+  if(!el){
+    e.preventDefault();
+    if(e.shiftKey&&!mid){
+      const div=document.createElement("div");div.className="marquee";bd.appendChild(div);
+      const base=new Set([...sel].filter(isCard));
+      mq={sx:e.clientX,sy:e.clientY,base,hits:new Set(base),el:div,moved:false};
+      bd.classList.add("boxing");
+    }else{
+      pan={sx:e.clientX,sy:e.clientY,x:view.x,y:view.y,moved:false};
+    }
+    try{bd.setPointerCapture(e.pointerId)}catch(_){}
+    bd.focus({preventScroll:true});
+    return;
+  }
+  const id=el.dataset.id,p=points.get(id);if(!p)return;
+  const row=e.target.closest(".row[data-row]");
+  if(e.shiftKey&&!mod&&!row){e.preventDefault();toggleSel(id);return}
+  const ids=!row&&sel.has(id)&&sel.size>1&&!mod?[...sel].filter(isCard):[id];
+  drag={id,rowId:row?row.dataset.id:null,sx:e.clientX,sy:e.clientY,moved:false,locked:readOnly,copy:mod&&!readOnly,items:ids.map(i=>{const q=points.get(i);return{id:i,el:cardEl(i),ox:+q.x||0,oy:+q.y||0}})};
+  try{el.setPointerCapture(e.pointerId)}catch(_){}
+});
+bd.addEventListener("pointermove",e=>{
+  if(wire){
+    const p=pt(e),w=$("#wire");w.setAttribute("x2",p.x);w.setAttribute("y2",p.y);
+    const c=cardAt(e),t=c&&c.dataset.id!==wire.from?c:null;
+    if(t!==wire.target){if(wire.target)wire.target.classList.remove("target");if(t)t.classList.add("target");wire.target=t}
+    return;
+  }
+  if(mq){
+    const r=bd.getBoundingClientRect();
+    const x0=Math.min(mq.sx,e.clientX)-r.left,y0=Math.min(mq.sy,e.clientY)-r.top,x1=Math.max(mq.sx,e.clientX)-r.left,y1=Math.max(mq.sy,e.clientY)-r.top;
+    if(!mq.moved&&Math.hypot(x1-x0,y1-y0)<4)return;
+    mq.moved=true;
+    mq.el.style.cssText="left:"+x0+"px;top:"+y0+"px;width:"+(x1-x0)+"px;height:"+(y1-y0)+"px";
+    const cx0=(x0-view.x)/view.z,cy0=(y0-view.y)/view.z,cx1=(x1-view.x)/view.z,cy1=(y1-view.y)/view.z;
+    const hits=new Set(mq.base);
+    for(const c of cv.querySelectorAll(".card")){
+      const L=c.offsetLeft,T=c.offsetTop,R=L+c.offsetWidth,B=T+c.offsetHeight;
+      if(R>=cx0&&L<=cx1&&B>=cy0&&T<=cy1)hits.add(c.dataset.id);
+      c.classList.toggle("sel",hits.has(c.dataset.id));
+    }
+    mq.hits=hits;
+    return;
+  }
+  if(pan){
+    const dx=e.clientX-pan.sx,dy=e.clientY-pan.sy;
+    if(!pan.moved&&Math.hypot(dx,dy)<4)return;
+    if(!pan.moved){pan.moved=true;bd.classList.add("panning")}
+    view.x=pan.x+dx;view.y=pan.y+dy;applyView();
+    return;
+  }
+  if(!drag||drag.locked)return;
+  const dx=(e.clientX-drag.sx)/view.z,dy=(e.clientY-drag.sy)/view.z;
+  if(!drag.moved&&Math.hypot(dx,dy)*view.z<4)return;
+  if(!drag.moved&&drag.copy)startCopy();
+  drag.moved=true;
+  for(const it of drag.items){
+    const nx=snap(it.ox+dx),ny=snap(it.oy+dy),q=points.get(it.id);
+    if(q){q.x=nx;q.y=ny}
+    if(it.el){it.el.style.left=nx+"px";it.el.style.top=ny+"px";it.el.classList.add("dragging")}
+  }
+  drawLinks();
+});
+function startCopy(){
+  const src=points.get(drag.id),srcEl=cardEl(drag.id);if(!src||!srcEl)return;
+  const id=newId();
+  points.set(id,{id,title:"New point",note:"",weight:pw(src),color:pcol(src),x:+src.x||0,y:+src.y||0});
+  const el=srcEl.cloneNode(true);
+  el.dataset.id=id;el.classList.remove("sel","open");
+  el.querySelector("h3").textContent="New point";
+  const n=el.querySelector("p");if(n)n.remove();
+  el.querySelectorAll(".drawer,.kb.tog").forEach(x=>x.remove());
+  cv.appendChild(el);
+  drag.id=id;drag.rowId=null;drag.created=true;drag.items=[{id,el,ox:+src.x||0,oy:+src.y||0}];
+}
+function endWire(e,cancel){
+  const w=wire;wire=null;
+  document.body.classList.remove("wiring");$("#wire").setAttribute("visibility","hidden");
+  if(w.target)w.target.classList.remove("target");
+  const c=cancel?null:cardAt(e);
+  if(c&&c.dataset.id!==w.from)connect(w.from,c.dataset.id);
+  if(held)sync();
+}
+function endDrag(){
+  const d=drag;drag=null;if(!d)return;
+  d.items.forEach(it=>{if(it.el)it.el.classList.remove("dragging")});
+  if(d.moved){
+    if(d.created){const p=points.get(d.id);if(p)put("points",d.id,p);select(d.id);const t=$("#f-title");if(t){t.focus();t.select()}}
+    else{d.items.forEach(it=>{const q=points.get(it.id);if(q)patch("points",it.id,{x:q.x,y:q.y})});renderBoard()}
+  }else if(d.rowId){select(d.rowId)}
+  else{select(d.id);const el=cardEl(d.id);if(el)el.focus({preventScroll:true})}
+  if(held)sync();
+}
+function endPan(){
+  const p=pan;pan=null;bd.classList.remove("panning");
+  if(p&&!p.moved&&(sel.size||selLink||pendingRestore))select(null);
+}
+function endMarquee(cancel){
+  const m=mq;mq=null;bd.classList.remove("boxing");m.el.remove();
+  if(cancel)renderBoard();
+  else if(m.moved)selectMany([...m.hits]);
+  if(held)sync();
+}
+bd.addEventListener("pointerup",e=>{if(wire)endWire(e,false);else if(mq)endMarquee(false);else if(pan)endPan();else endDrag()});
+bd.addEventListener("pointercancel",e=>{if(wire)endWire(e,true);else if(mq)endMarquee(true);else if(pan)endPan();else endDrag()});
+bd.addEventListener("dblclick",e=>{if(readOnly||e.shiftKey||e.target.closest(".card,[data-link],.zoombar"))return;createPoint(pt(e))});
+bd.addEventListener("wheel",e=>{
+  if(e.target.closest(".zoombar"))return;
+  e.preventDefault();
+  const r=bd.getBoundingClientRect(),step=e.deltaMode===1?40:e.deltaMode===2?400:1;
+  zoomAt(view.z*Math.exp(-e.deltaY*step*0.0015),e.clientX-r.left,e.clientY-r.top);
+},{passive:false});
+bd.addEventListener("scroll",()=>{if(bd.scrollLeft||bd.scrollTop){bd.scrollLeft=0;bd.scrollTop=0}});
+cv.addEventListener("keydown",e=>{
+  const k=e.target.closest(".kb");
+  if(k&&(e.key==="Enter"||e.key===" ")){e.preventDefault();const id=k.closest(".card").dataset.id;if(k.dataset.act==="addkid")addKid(id);else toggleKids(id);return}
+  const el=e.target.closest(".card");if(el&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(el.dataset.id)}
+});
+
+/* the side panel catches up with other people's changes once you stop typing */
+const pbody=$("#pbody");
+pbody.addEventListener("focusout",()=>{flushAll();if(panelStale)catchUpPanel()});
+pbody.addEventListener("pointerdown",()=>{panelPointer=true});
+document.addEventListener("pointerup",()=>{if(panelPointer){panelPointer=false;if(panelStale)catchUpPanel()}});
+
+/* ---------- zoom bar and keys ---------- */
+$("#zin").addEventListener("click",()=>zoomStep(1));
+$("#zout").addEventListener("click",()=>zoomStep(-1));
+$("#zfit").addEventListener("click",fitView);
+$("#zsel").addEventListener("change",e=>{zoomCenter(+e.target.value/100);e.target.blur()});
+
+function typing(t){return t&&(t.tagName==="INPUT"&&!["radio","checkbox","button","file"].includes(t.type)||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable)}
+document.addEventListener("keydown",e=>{
+  const mod=e.ctrlKey||e.metaKey;
+  if(mod&&(e.key==="="||e.key==="+")){e.preventDefault();zoomStep(1);return}
+  if(mod&&(e.key==="-"||e.key==="_")){e.preventDefault();zoomStep(-1);return}
+  if(mod&&e.key==="0"){e.preventDefault();zoomCenter(1);return}
+  if(typing(e.target))return;
+  if(e.key==="Delete"||e.key==="Backspace"){
+    if(readOnly)return;
+    if(selLink){e.preventDefault();deleteLink(selLink)}
+    else if(sel.size){e.preventDefault();deletePoints([...sel])}
+  }else if(mod&&!e.shiftKey&&(e.key==="z"||e.key==="Z")){e.preventDefault();undoDelete()}
+  else if(mod&&(e.key==="a"||e.key==="A")){e.preventDefault();selectMany([...points.keys()])}
+  else if(e.key==="Escape"&&(sel.size||selLink||pendingRestore)){select(null)}
+});
+$("#add").addEventListener("click",()=>createPoint(null));
+window.addEventListener("resize",()=>drawLinks());
+window.addEventListener("pagehide",flushAll);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flushAll()});
+
+/* ---------- backup ---------- */
+function toData(){
+  const o={app:"ODP Idea Map",version:1,lastColor,points:{},links:{}};
+  for(const [k,p] of points){const {id,...r}=p;o.points[k]=r}
+  for(const [k,l] of links){const {id,...r}=l;o.links[k]=r}
+  return o;
+}
+$("#backup").addEventListener("click",()=>{
+  const blob=new Blob([JSON.stringify(toData(),null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="ODP Idea Map backup "+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  flash("Backup saved to your downloads");
+});
+$("#restore").addEventListener("click",()=>$("#restore-file").click());
+$("#restore-file").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    let v;try{v=JSON.parse(r.result)}catch(_){flash("That file isn't an Idea Map backup",true);return}
+    if(!v||typeof v.points!=="object"||typeof v.links!=="object"||!v.points||!v.links){flash("That file isn't an Idea Map backup",true);return}
+    sel=new Set();selLink=null;pendingRestore=v;render();
+  };
+  r.readAsText(f);
+});
+function replaceAll(v){
+  if(readOnly)return;
+  const np=new Map(Object.entries(v.points).filter(([k,p])=>okId(k)&&p&&typeof p==="object").map(([k,p])=>[k,{...p,id:k}]));
+  const nl=new Map(Object.entries(v.links).filter(([k,l])=>okId(k)&&l&&l.from&&l.to&&np.has(l.from)&&np.has(l.to)).map(([k,l])=>[k,{...l,id:k}]));
+  for(const id of links.keys())if(!nl.has(id))drop("links",id);
+  for(const id of points.keys())if(!np.has(id))drop("points",id);
+  for(const [id,p] of np)put("points",id,p);
+  for(const [id,l] of nl)put("links",id,l);
+  points=np;links=nl;sel=new Set();selLink=null;undo.length=0;
+  if(COLORS.includes(v.lastColor))setLastColor(v.lastColor);
+  flash("Backup opened for everyone");render();fitView();
+}
+
+/* ---------- start and stop (called by the sign-in script below) ---------- */
+function showSignedIn(email){
+  $("#signin").hidden=true;$("#signout").hidden=false;
+  const w=$("#who");w.textContent=email||"";w.hidden=!email;
+}
+function startShared(api,email){
+  stopShared(true);
+  db=api;offline=false;notMember=false;readOnly=false;live=false;slow=false;failMsg="";tries=0;
+  loaded.points=loaded.links=false;latest.points=latest.links=null;
+  document.body.classList.remove("ro");
+  $("#add").disabled=false;$("#backup").hidden=false;$("#restore").hidden=false;
+  showSignedIn(email);
+  subscribe();render();refreshStatus();
+}
+function stopShared(quiet){
+  flushAll();
+  unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];clearTimeout(slowT);
+  db=null;W.clear();waiting.clear();roCollapsed.clear();
+  points=new Map();links=new Map();sel=new Set();selLink=null;undo.length=0;pendingRestore=null;fitted=false;notMember=false;
+  if(quiet)return;
+  offline=true;document.body.classList.add("ro");
+  $("#add").disabled=true;$("#backup").hidden=true;$("#restore").hidden=true;
+  $("#signin").hidden=unconfigured;$("#signout").hidden=true;$("#who").hidden=true;
+  render();refreshStatus();
+}
+function notConfigured(){unconfigured=true;offline=true;document.body.classList.add("ro");render();refreshStatus()}
+loadView();applyView();render();refreshStatus();
+</script>
+<script src="firebase-config.js"></script>
+<script type="module">
+/* Google sign-in and the Firestore database. The app above only sees a small store API:
+   doc(path).set/update/delete and collection(name).onSnapshot */
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,collection,setDoc,updateDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const cfg=window.ODP_FIREBASE;
+if(!cfg||!cfg.apiKey||/PASTE/.test(cfg.apiKey)){notConfigured()}
+else{
+  const app=initializeApp(cfg),auth=getAuth(app),fs=getFirestore(app);
+  const code=e=>{const c=(e&&e.code)||"";return c==="permission-denied"||c==="unauthenticated"?"denied":c==="not-found"?"missing":c==="resource-exhausted"?"resource_exhausted":c==="unavailable"||c==="deadline-exceeded"?"unavailable":c==="invalid-argument"?"invalid_argument":c||"unknown"};
+  const wrap=p=>p.catch(e=>{throw{code:code(e),message:e&&e.message}});
+  const api={
+    doc:path=>{const r=doc(fs,path);return{set:d=>wrap(setDoc(r,d)),update:d=>wrap(updateDoc(r,d)),delete:()=>wrap(deleteDoc(r))}},
+    collection:name=>({onSnapshot:(next,err)=>onSnapshot(collection(fs,name),{includeMetadataChanges:true},next,e=>{if(err)err({code:code(e),message:e&&e.message})})})
+  };
+  onAuthStateChanged(auth,u=>{if(u)startShared(api,u.email);else stopShared()});
+  document.getElementById("signin").addEventListener("click",()=>{
+    signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{
+      const c=e&&e.code;
+      if(c==="auth/popup-closed-by-user"||c==="auth/cancelled-popup-request")return;
+      flash(c==="auth/unauthorized-domain"?"Sign-in isn't allowed on this web address yet":c==="auth/popup-blocked"?"Allow pop-ups for this page, then sign in again":"Couldn't sign in. Try again",true);
+    });
+  });
+  document.getElementById("signout").addEventListener("click",()=>signOut(auth));
+}
+</script>
+
+</body>
+</html>

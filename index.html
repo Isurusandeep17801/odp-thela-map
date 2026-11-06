@@ -121,6 +121,12 @@ body.ro .card{cursor:pointer}
 .zb.fit{font-size:12px;padding:0 9px;border-left:1px solid var(--line);border-radius:0 3px 3px 0}
 #zsel{border:0;background:transparent;font:500 12px var(--f-mono);padding:4px 2px;cursor:pointer;color:var(--fg);font-variant-numeric:tabular-nums}
 #zsel option{background:var(--panel);color:var(--fg)}
+.linebar{position:absolute;left:12px;bottom:12px;z-index:6;display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:3px;box-shadow:0 2px 10px rgba(0,0,0,.08);cursor:default}
+.linebar .lab{padding:0 6px 0 5px}
+.lm{border:0;background:transparent;height:28px;border-radius:3px;padding:0 9px;font:500 12px var(--f-mono);color:var(--muted);cursor:pointer}
+.lm:hover{background:var(--bg);color:var(--fg)}
+.lm[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
+@media (max-width:560px){.linebar{left:auto;right:12px;bottom:56px}}
 .swatches{display:flex;flex-wrap:wrap;gap:6px}
 .swatch{width:26px;height:26px;border-radius:50%;background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
 .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--fg)}
@@ -193,6 +199,12 @@ kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
           <p>This takes a moment.</p>
         </div>
       </div>
+      <div class="linebar" role="group" aria-label="Which lines to show">
+        <span class="lab">Lines</span>
+        <button class="lm" type="button" data-lines="all" title="Show every line">All</button>
+        <button class="lm" type="button" data-lines="conn" title="Show only the lines of the selected card">Connected</button>
+        <button class="lm" type="button" data-lines="off" title="Hide all lines">Hidden</button>
+      </div>
       <div class="zoombar" aria-label="Zoom">
         <button class="zb" id="zout" type="button" aria-label="Zoom out" title="Zoom out (Ctrl -)">−</button>
         <select id="zsel" aria-label="Zoom level"></select>
@@ -232,7 +244,7 @@ let points=new Map(),links=new Map();
 let pics=new Map(),picsReady=false,lb=null;
 const picCache=new Map(),picLoading=new Map(),MAX_PIC=900000;
 let sel=new Set(),selLink=null,drag=null,wire=null,pan=null,mq=null;
-let lastColor="grey";
+let lastColor="grey",lineMode="all";
 const undo=[];
 const view={x:0,y:0,z:1};
 let hadView=false,fitted=false;
@@ -449,6 +461,7 @@ const clampZ=z=>Math.min(ZMAX,Math.max(ZMIN,z));
 function loadView(){
   try{const v=JSON.parse(lsGet(KEY+"-view")||"null");if(v&&isFinite(v.x)&&isFinite(v.y)&&isFinite(v.z)){view.x=v.x;view.y=v.y;view.z=clampZ(v.z);hadView=true}}catch(_){}
   const c=lsGet(KEY+"-color");if(COLORS.includes(c))lastColor=c;
+  const m=lsGet(KEY+"-lines");if(["all","conn","off"].includes(m))lineMode=m;
 }
 let viewT=0;
 function saveView(){clearTimeout(viewT);viewT=setTimeout(()=>lsSet(KEY+"-view",JSON.stringify(view)),300)}
@@ -559,8 +572,10 @@ function drawLinks(){
   sizeSvgs();
   const svg=$("#links");
   let out="";
+  const focus=new Set(sel);if(drag)drag.items.forEach(it=>focus.add(it.id));
   for(const l of links.values()){
     const fa=visId(l.from),tb=visId(l.to);if(!fa||!tb||fa===tb)continue;
+    if(lineMode!=="all"&&l.id!==selLink&&!(lineMode==="conn"&&(focus.has(l.from)||focus.has(l.to)||focus.has(fa)||focus.has(tb))))continue;
     const a=box(fa),b=box(tb);if(!a||!b)continue;
     const rt=route(a,b);
     const c=lc(l),w=lw(l),sw=1+(w-1)*1.2,via=fa!==l.from||tb!==l.to;
@@ -693,6 +708,7 @@ function renderPanel(){
       '<li>Hover over the photo icon in a card\'s top-right corner to see its photos, or click it to add the first photo. Click the icon to keep the photos open, add more with the + on the photo\'s edge, swipe or press the arrows to move between them, and Delete removes the one showing.</li>'+
       '<li>Drag from a dot on either side of a card onto another card to connect them.</li>'+
       '<li>Click a line to write a note on it or change its colour or weight. A dot in the middle of a line means it has a note.</li>'+
+      '<li>Use Lines at the bottom left to show every line, only the selected card\'s lines (Connected), or none (Hidden).</li>'+
       '<li>Select a card, an item or a line and press <kbd>Delete</kbd> to remove it. <kbd>Ctrl</kbd>+<kbd>Z</kbd> brings back what you deleted.</li></ol>'+
       '<p class="hint">Changes save by themselves and show up for everyone on the map.</p>');
     lastSig=panelSig();return;
@@ -810,7 +826,7 @@ function updateLink(id,ch,delay){if(readOnly)return;const l=links.get(id);if(!l)
 function cardAt(e){const el=document.elementFromPoint(e.clientX,e.clientY);return el?el.closest(".card"):null}
 
 bd.addEventListener("pointerdown",e=>{
-  if(e.target.closest(".zoombar"))return;
+  if(e.target.closest(".zoombar,.linebar"))return;
   if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
   const mid=e.button===1,mod=e.ctrlKey||e.metaKey;
   const act=mid?null:e.target.closest("[data-act]");
@@ -939,9 +955,9 @@ function endMarquee(cancel){
 }
 bd.addEventListener("pointerup",e=>{if(wire)endWire(e,false);else if(mq)endMarquee(false);else if(pan)endPan();else endDrag()});
 bd.addEventListener("pointercancel",e=>{if(wire)endWire(e,true);else if(mq)endMarquee(true);else if(pan)endPan();else endDrag()});
-bd.addEventListener("dblclick",e=>{if(readOnly||e.shiftKey||e.target.closest(".card,[data-link],.zoombar"))return;createPoint(pt(e))});
+bd.addEventListener("dblclick",e=>{if(readOnly||e.shiftKey||e.target.closest(".card,[data-link],.zoombar,.linebar"))return;createPoint(pt(e))});
 bd.addEventListener("wheel",e=>{
-  if(e.target.closest(".zoombar"))return;
+  if(e.target.closest(".zoombar,.linebar"))return;
   e.preventDefault();
   const r=bd.getBoundingClientRect(),step=e.deltaMode===1?40:e.deltaMode===2?400:1;
   zoomAt(view.z*Math.exp(-e.deltaY*step*0.0015),e.clientX-r.left,e.clientY-r.top);
@@ -1002,6 +1018,8 @@ document.addEventListener("pointerup",()=>{if(panelPointer){panelPointer=false;i
 $("#zin").addEventListener("click",()=>zoomStep(1));
 $("#zout").addEventListener("click",()=>zoomStep(-1));
 $("#zfit").addEventListener("click",fitView);
+function showLineMode(){document.querySelectorAll(".lm").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lines===lineMode)))}
+document.querySelectorAll(".lm").forEach(b=>b.addEventListener("click",()=>{lineMode=b.dataset.lines;lsSet(KEY+"-lines",lineMode);showLineMode();drawLinks()}));
 $("#zsel").addEventListener("change",e=>{zoomCenter(+e.target.value/100);e.target.blur()});
 
 function typing(t){return t&&(t.tagName==="INPUT"&&!["radio","checkbox","button","file"].includes(t.type)||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable)}
@@ -1271,7 +1289,7 @@ function stopShared(quiet){
   render();refreshStatus();
 }
 function notConfigured(){unconfigured=true;offline=true;document.body.classList.add("ro");render();refreshStatus()}
-loadView();applyView();render();refreshStatus();
+loadView();showLineMode();applyView();render();refreshStatus();
 </script>
 <script src="firebase-config.js"></script>
 <script type="module">

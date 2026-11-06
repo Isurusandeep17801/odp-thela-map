@@ -78,11 +78,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pic.has{opacity:.9}
 .card:hover .pic,.card.sel .pic,.pic:focus-visible,.pic.on{opacity:1}
 .pic:hover,.pic.on{color:var(--accent)}
+.pic .plus{display:none;font:600 14px/1 var(--f-mono)}
+.pic:not(.has):hover svg,.pic:not(.has):focus-visible svg{display:none}
+.pic:not(.has):hover .plus,.pic:not(.has):focus-visible .plus{display:inline}
 body.nopics .pic,body.ro .pic:not(.has){display:none}
 .pp{position:fixed;z-index:40;width:max-content;max-width:calc(100vw - 32px)}
 .pp-stage{position:relative;display:flex;align-items:center;justify-content:center;min-width:120px;min-height:80px;border-radius:3px;overflow:hidden;background:var(--paper);box-shadow:0 8px 26px rgba(0,0,0,.28);touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.pp.bare .pp-stage,.pp.bare .pp-edge.del{display:none}
-.pp.bare .pp-edge.add{position:static;box-shadow:0 3px 10px rgba(0,0,0,.18)}
 .pp-stage img{display:block;max-width:min(320px,calc(100vw - 40px));max-height:240px;width:auto;height:auto}
 .pp-msg{margin:0;padding:12px 16px;color:var(--muted);font-size:12.5px;text-align:center}
 .pp-nav{position:absolute;top:50%;margin-top:-13px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font:400 18px/1 var(--f-ui);display:flex;align-items:center;justify-content:center;padding:0 0 2px;cursor:pointer;opacity:0}
@@ -518,7 +519,7 @@ function renderBoard(){
     el.setAttribute("aria-label",(p.title||"Untitled")+", weight "+w+(pc?", "+pc:"")+(kids.length?", "+kids.length+" items":""));
     el.style.cssText="left:"+x+"px;top:"+y+"px;--cw:"+cw+"px;--bw:"+bw+"px;--fs:"+fs+"px"+(pc?";--cc:var(--c-"+pc+")":"");
     el.innerHTML='<div class="wd" aria-hidden="true">'+"●".repeat(w)+"○".repeat(5-w)+'</div><h3>'+esc(p.title||"Untitled")+'</h3>'+(p.note?'<p>'+esc(p.note)+'</p>':'')+
-      (n=>'<button class="pic'+(n?' has':'')+(lb&&lb.card===p.id?' on':'')+'" type="button" data-act="pics" title="'+(n?n+' photo'+(n>1?'s':''):'Photos')+'" aria-label="'+(n?n+' photo'+(n>1?'s':''):'Add photos')+'">'+CAM+(n?'<span>'+n+'</span>':'')+'</button>')(nPics.get(p.id)||0)+
+      (n=>'<button class="pic'+(n?' has':'')+(lb&&lb.card===p.id?' on':'')+'" type="button" data-act="pics" title="'+(n?n+' photo'+(n>1?'s':''):'Photos')+'" aria-label="'+(n?n+' photo'+(n>1?'s':''):'Add photos')+'">'+CAM+(n?'<span>'+n+'</span>':'<span class="plus" aria-hidden="true">+</span>')+'</button>')(nPics.get(p.id)||0)+
       '<span class="port l" title="Drag onto another card to connect"></span><span class="port" title="Drag onto another card to connect"></span>'+
       '<div class="kidbar">'+(kids.length?'<button class="kb tog" type="button" data-act="toggle" title="'+(p.collapsed?"Open":"Close")+' the list">'+(p.collapsed?"▸":"▾")+' '+kids.length+'</button>':'')+
       '<button class="kb add" type="button" data-act="addkid" title="Add an item to this card\'s list" aria-label="Add an item">+</button></div>'+
@@ -689,7 +690,7 @@ function renderPanel(){
       '<li>Press <kbd>+</kbd> under a card to start a drop-down list of related items. <kbd>▾</kbd> opens or closes it. Click an item to edit it; <kbd>Enter</kbd> in its title adds the next one.</li>'+
       '<li>Select several cards with <kbd>Shift</kbd>+click, or hold <kbd>Shift</kbd> and drag a box on the board. <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all. Drag any selected card to move them together.</li>'+
       '<li>Hold <kbd>Ctrl</kbd> and drag a card to make a new card with the same size and colour.</li>'+
-      '<li>Hover over the photo icon in a card\'s top-right corner to see its photos. Click the icon to keep them open, add photos with the + on the photo\'s edge, swipe or press the arrows to move between them, and Delete removes the one showing.</li>'+
+      '<li>Hover over the photo icon in a card\'s top-right corner to see its photos, or click it to add the first photo. Click the icon to keep the photos open, add more with the + on the photo\'s edge, swipe or press the arrows to move between them, and Delete removes the one showing.</li>'+
       '<li>Drag from a dot on either side of a card onto another card to connect them.</li>'+
       '<li>Click a line to write a note on it or change its colour or weight. A dot in the middle of a line means it has a note.</li>'+
       '<li>Select a card, an item or a line and press <kbd>Delete</kbd> to remove it. <kbd>Ctrl</kbd>+<kbd>Z</kbd> brings back what you deleted.</li></ol>'+
@@ -816,7 +817,7 @@ bd.addEventListener("pointerdown",e=>{
   if(act){
     e.preventDefault();e.stopPropagation();
     const id=act.closest(".card").dataset.id;
-    if(act.dataset.act==="addkid")addKid(id);else if(act.dataset.act==="pics")togglePp(id);else toggleKids(id);
+    if(act.dataset.act==="addkid")addKid(id);else if(act.dataset.act==="pics"){}else toggleKids(id);
     return;
   }
   const port=mid||readOnly?null:e.target.closest(".port");
@@ -987,7 +988,7 @@ bd.addEventListener("pointercancel",touchEnd,true);
 bd.addEventListener("scroll",()=>{if(bd.scrollLeft||bd.scrollTop){bd.scrollLeft=0;bd.scrollTop=0}});
 cv.addEventListener("keydown",e=>{
   const k=e.target.closest(".kb,.pic");
-  if(k&&(e.key==="Enter"||e.key===" ")){e.preventDefault();const id=k.closest(".card").dataset.id;if(k.dataset.act==="addkid")addKid(id);else if(k.dataset.act==="pics")togglePp(id);else toggleKids(id);return}
+  if(k&&(e.key==="Enter"||e.key===" ")){e.preventDefault();const id=k.closest(".card").dataset.id;if(k.dataset.act==="addkid")addKid(id);else if(k.dataset.act==="pics")picIcon(id);else toggleKids(id);return}
   const el=e.target.closest(".card");if(el&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(el.dataset.id)}
 });
 
@@ -1060,10 +1061,10 @@ function restorePics(u){
   });
   renderBoard();
 }
-function ppStatus(t,warn){const s=$("#pp-status");s.textContent=t||"";s.classList.toggle("warn",!!warn);if(warn&&t&&$("#pp").classList.contains("bare"))flash(t,true)}
+function ppStatus(t,warn){const s=$("#pp-status");s.textContent=t||"";s.classList.toggle("warn",!!warn);if(warn&&t&&!lb)flash(t,true)}
 let ppOpenT=0,ppCloseT=0;
 function openPp(cid,pinned){
-  if(!points.has(cid)||!picsReady||(readOnly&&!picsOf(cid).length))return;
+  if(!points.has(cid)||!picsReady||!picsOf(cid).length)return;
   clearTimeout(ppOpenT);clearTimeout(ppCloseT);
   if(!lb||lb.card!==cid){lb={card:cid,i:0,id:null,pinned:!!pinned};ppStatus("")}
   else if(pinned)lb.pinned=true;
@@ -1084,7 +1085,7 @@ function placePp(){
   if(r.bottom<b.top||r.top>b.bottom||r.right<b.left||r.left>b.right){closePp();return}
   const w=pp.offsetWidth,h=pp.offsetHeight,W=innerWidth,H=innerHeight;
   const x=Math.min(Math.max(16,r.right-w+8),W-w-16);
-  const gap=pp.classList.contains("bare")?4:16;let y=r.bottom+gap;if(y+h>H-8)y=Math.max(16,r.top-h-gap);
+  let y=r.bottom+16;if(y+h>H-8)y=Math.max(16,r.top-h-16);
   pp.style.left=Math.round(x)+"px";pp.style.top=Math.round(y)+"px";
 }
 function renderPp(){
@@ -1095,12 +1096,11 @@ function renderPp(){
   lb.i=Math.max(0,Math.min(lb.i,list.length-1));
   const cur=list[lb.i]||null;lb.id=cur?cur.id:null;
   $("#pp").setAttribute("aria-label",list.length?"Photo "+(lb.i+1)+" of "+list.length:"Photos");
-  $("#pp").classList.toggle("bare",!cur);
   $("#pp-prev").hidden=$("#pp-next").hidden=list.length<2;
   $("#pp-add").hidden=readOnly;$("#pp-del").hidden=readOnly||!cur;
   $("#pp-dots").innerHTML=list.length>1?list.map((q,j)=>'<button type="button" data-j="'+j+'" class="'+(j===lb.i?"on":"")+'" aria-label="Photo '+(j+1)+'"'+(j===lb.i?' aria-current="true"':'')+'></button>').join(""):"";
   const img=$("#pp-img"),msg=$("#pp-msg");
-  if(!cur){img.hidden=true;img.removeAttribute("src");msg.hidden=true;placePp();return}
+  if(!cur){closePp();return}
   img.alt="Photo "+(lb.i+1)+" for "+(p.title||"Untitled");
   const shown=picCache.get(cur.id);
   if(shown){if(img.getAttribute("src")!==shown)img.src=shown;img.hidden=false;msg.hidden=true}
@@ -1117,7 +1117,8 @@ function deletePic(){
   const cur=picsOf(lb.card)[lb.i];if(!cur)return;
   const u={points:[],links:[]};undo.push(u);if(undo.length>30)undo.shift();
   u.pics=removePics([cur],u);
-  lb.id=null;renderPp();renderBoard();ppStatus("Deleted. Ctrl+Z to undo");
+  lb.id=null;renderBoard();
+  if(picsOf(lb.card).length){renderPp();ppStatus("Deleted. Ctrl+Z to undo")}else{closePp();flash("Photo deleted. Press Ctrl+Z to undo")}
 }
 /* shrink a photo to fit the database: at most 1600 px on its longest side, saved as JPEG */
 async function shrink(file){
@@ -1138,9 +1139,17 @@ async function shrink(file){
     return{data:out,w,h};
   }finally{URL.revokeObjectURL(url)}
 }
-async function addPhotos(files){
-  if(!lb||readOnly||!db)return;
-  const cid=lb.card,api=db,list=[...files];if(!list.length)return;
+let pickCard=null;
+function picIcon(cid){
+  if(!picsReady)return;
+  if(picsOf(cid).length){togglePp(cid);return}
+  if(readOnly)return;
+  pickCard=cid;$("#pp-file").click();
+}
+async function addPhotos(files,cid){
+  cid=cid||(lb&&lb.card);
+  if(!cid||!points.has(cid)||readOnly||!db)return;
+  const api=db,list=[...files];if(!list.length)return;
   let added=0,failed=0;const plus=$("#pp-add");plus.textContent="…";plus.disabled=true;
   for(let n=0;n<list.length;n++){
     ppStatus(list.length>1?"Adding "+(n+1)+" of "+list.length+"…":"Adding…");
@@ -1152,7 +1161,7 @@ async function addPhotos(files){
       await api.doc("pics/"+id).set(meta);
       if(!pics.has(id))pics.set(id,{...meta,id});
       added++;
-      if(lb&&lb.card===cid){lb.id=id;renderPp()}
+      if(lb&&lb.card===cid){lb.id=id;renderPp()}else if(!lb||!lb.pinned){openPp(cid,true);if(lb){lb.id=id;renderPp()}}
       renderBoard();
     }catch(e){
       if(e&&e.code==="denied"){plus.textContent="+";plus.disabled=false;ppStatus("Photos can't be saved: check the database rules",true);return}
@@ -1167,7 +1176,9 @@ $("#pp-prev").addEventListener("click",()=>ppStep(-1));
 $("#pp-next").addEventListener("click",()=>ppStep(1));
 $("#pp-del").addEventListener("click",deletePic);
 $("#pp-add").addEventListener("click",()=>$("#pp-file").click());
-$("#pp-file").addEventListener("change",e=>{const f=[...(e.target.files||[])];e.target.value="";addPhotos(f)});
+$("#pp-file").addEventListener("change",e=>{const f=[...(e.target.files||[])],c=pickCard;e.target.value="";pickCard=null;addPhotos(f,c)});
+$("#pp-add").addEventListener("pointerdown",()=>{pickCard=null});
+cv.addEventListener("click",e=>{const b=e.target.closest(".pic");if(!b)return;e.stopPropagation();picIcon(b.closest(".card").dataset.id)});
 $("#pp-dots").addEventListener("click",e=>{const b=e.target.closest("[data-j]");if(b&&lb){lb.i=+b.dataset.j;lb.id=null;renderPp()}});
 /* using the menu keeps it open; swipe sideways on the photo to move between photos */
 $("#pp").addEventListener("pointerdown",()=>{if(lb)lb.pinned=true});
@@ -1189,6 +1200,7 @@ document.addEventListener("pointerover",e=>{
   if(icon){
     if(drag||wire||mq||pan)return;
     const id=icon.closest(".card").dataset.id;
+    if(!picsOf(id).length)return;
     if(lb&&(lb.card===id||lb.pinned))return;
     clearTimeout(ppOpenT);ppOpenT=setTimeout(()=>openPp(id,false),160);
     return;

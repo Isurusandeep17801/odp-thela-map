@@ -27,7 +27,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .status.warn{color:var(--warn)}
 .status.warn::before{background:var(--warn)}
 .status.idle::before{background:var(--muted)}
-.who{font-size:13px;color:var(--muted);overflow-wrap:anywhere;min-width:0}
 .btn{border:1px solid var(--line);background:var(--panel);padding:7px 12px;border-radius:3px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--muted)}
 .btn:disabled{opacity:.45;cursor:default}
@@ -149,12 +148,9 @@ kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
     <div class="brand"><h1>ODP Idea Map</h1><span class="mono">Kadirana · Task 02</span></div>
     <div class="grow"></div>
     <span class="status idle" id="status" role="status">Connecting…</span>
-    <span class="who" id="who" hidden></span>
-    <button class="btn quiet" id="signout" type="button" hidden>Sign out</button>
     <button class="btn quiet" id="backup" type="button" hidden>Save backup</button>
     <button class="btn quiet" id="restore" type="button" hidden>Open backup</button>
     <input type="file" id="restore-file" accept=".json,application/json" hidden>
-    <button class="btn primary" id="signin" type="button" hidden>Sign in with Google</button>
     <button class="btn primary" id="add" type="button" disabled>Add point</button>
   </header>
   <main class="main">
@@ -436,8 +432,8 @@ function render(){renderBoard();renderPanel()}
 function renderEmpty(){
   const e=$("#empty");let h,t;
   if(unconfigured){h="Not connected yet";t="This copy of the map has no database set up, so it can't show or save anything."}
-  else if(offline){h="Sign in to see the map";t="Press Sign in with Google at the top, and use the Google account your group added to the map."}
-  else if(notMember){h="This account can't open the map";t="Sign out and use the Google account your group added, or ask whoever runs the map to add this one."}
+  else if(offline){h="Not connected";t="Reload the page to connect to the map again."}
+  else if(notMember){h="The database refused to open the map";t="Its Firestore rules don't allow it. Check the rules in the Firebase console."}
   else if(!live&&!points.size){h=slow?"Can't reach the shared map yet":"Loading the shared map…";t=slow?"Check your connection. The map shows up as soon as it loads.":"This takes a moment."}
   else{h="No points yet";t=readOnly?"Nothing has been added to this map yet.":"Press Add point, or double-click anywhere on the board, to make your first card."}
   e.querySelector("h2").textContent=h;e.querySelector("p").textContent=t;
@@ -952,18 +948,13 @@ function replaceAll(v){
   flash("Backup opened for everyone");render();fitView();
 }
 
-/* ---------- start and stop (called by the sign-in script below) ---------- */
-function showSignedIn(email){
-  $("#signin").hidden=true;$("#signout").hidden=false;
-  const w=$("#who");w.textContent=email||"";w.hidden=!email;
-}
-function startShared(api,email){
+/* ---------- start and stop (called by the database script below) ---------- */
+function startShared(api){
   stopShared(true);
   db=api;offline=false;notMember=false;readOnly=false;live=false;slow=false;failMsg="";tries=0;
   loaded.points=loaded.links=false;latest.points=latest.links=null;
   document.body.classList.remove("ro");
   $("#add").disabled=false;$("#backup").hidden=false;$("#restore").hidden=false;
-  showSignedIn(email);
   subscribe();render();refreshStatus();
 }
 function stopShared(quiet){
@@ -974,7 +965,6 @@ function stopShared(quiet){
   if(quiet)return;
   offline=true;document.body.classList.add("ro");
   $("#add").disabled=true;$("#backup").hidden=true;$("#restore").hidden=true;
-  $("#signin").hidden=unconfigured;$("#signout").hidden=true;$("#who").hidden=true;
   render();refreshStatus();
 }
 function notConfigured(){unconfigured=true;offline=true;document.body.classList.add("ro");render();refreshStatus()}
@@ -982,31 +972,22 @@ loadView();applyView();render();refreshStatus();
 </script>
 <script src="firebase-config.js"></script>
 <script type="module">
-/* Google sign-in and the Firestore database. The app above only sees a small store API:
-   doc(path).set/update/delete and collection(name).onSnapshot */
+/* The Firestore database. No sign-in: anyone with the link can open and edit the map.
+   The app above only sees a small store API: doc(path).set/update/delete and collection(name).onSnapshot */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,collection,setDoc,updateDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const cfg=window.ODP_FIREBASE;
 if(!cfg||!cfg.apiKey||/PASTE/.test(cfg.apiKey)){notConfigured()}
 else{
-  const app=initializeApp(cfg),auth=getAuth(app),fs=getFirestore(app);
+  const app=initializeApp(cfg),fs=getFirestore(app);
   const code=e=>{const c=(e&&e.code)||"";return c==="permission-denied"||c==="unauthenticated"?"denied":c==="not-found"?"missing":c==="resource-exhausted"?"resource_exhausted":c==="unavailable"||c==="deadline-exceeded"?"unavailable":c==="invalid-argument"?"invalid_argument":c||"unknown"};
   const wrap=p=>p.catch(e=>{throw{code:code(e),message:e&&e.message}});
   const api={
     doc:path=>{const r=doc(fs,path);return{set:d=>wrap(setDoc(r,d)),update:d=>wrap(updateDoc(r,d)),delete:()=>wrap(deleteDoc(r))}},
     collection:name=>({onSnapshot:(next,err)=>onSnapshot(collection(fs,name),{includeMetadataChanges:true},next,e=>{if(err)err({code:code(e),message:e&&e.message})})})
   };
-  onAuthStateChanged(auth,u=>{if(u)startShared(api,u.email);else stopShared()});
-  document.getElementById("signin").addEventListener("click",()=>{
-    signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{
-      const c=e&&e.code;
-      if(c==="auth/popup-closed-by-user"||c==="auth/cancelled-popup-request")return;
-      flash(c==="auth/unauthorized-domain"?"Sign-in isn't allowed on this web address yet":c==="auth/popup-blocked"?"Allow pop-ups for this page, then sign in again":"Couldn't sign in. Try again",true);
-    });
-  });
-  document.getElementById("signout").addEventListener("click",()=>signOut(auth));
+  startShared(api);
 }
 </script>
 

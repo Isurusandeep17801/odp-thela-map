@@ -141,6 +141,22 @@ body.ro .card{cursor:pointer}
 .lm:hover{background:var(--bg);color:var(--fg)}
 .lm[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
 @media (max-width:560px){.linebar{left:auto;right:12px;bottom:56px}}
+#frames{position:absolute;left:0;top:0;width:0;height:0}
+.gf{position:absolute;--gc:var(--muted);border:1.5px dashed var(--gc);border-radius:6px;background:color-mix(in srgb,var(--gc) 6%,transparent);pointer-events:none}
+.gf.sel{border-style:solid;box-shadow:0 0 0 1.5px var(--accent)}
+.gf-bar{position:absolute;left:12px;top:-14px;max-width:calc(100% - 24px);padding:4px 10px;border-radius:4px;border:1.5px solid var(--gc);background:var(--paper);color:var(--fg);font:600 13px/1.2 var(--f-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:1}
+.gf.sel .gf-bar{border-color:var(--accent)}
+.gf-note{position:absolute;left:14px;right:14px;top:22px;font-size:12px;line-height:1.4;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;pointer-events:none}
+.gf-edge{position:absolute;pointer-events:auto;cursor:grab;touch-action:none}
+.gf-edge.t{left:0;right:0;top:-6px;height:12px}
+.gf-edge.b{left:0;right:0;bottom:-6px;height:12px}
+.gf-edge.l{top:0;bottom:0;left:-6px;width:12px}
+.gf-edge.r{top:0;bottom:0;right:-6px;width:12px}
+.gf-size{position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border-radius:3px;border:1.5px solid var(--gc);background:var(--panel);cursor:nwse-resize;pointer-events:auto;touch-action:none;opacity:0;z-index:1}
+.gf.sel .gf-size,.gf-size:hover{opacity:1}
+body.ro .gf-size{display:none}
+body.ro .gf-bar,body.ro .gf-edge{cursor:pointer}
+.board.drawing,.board.drawing .card,.board.drawing .gf-bar,.board.drawing .gf-edge{cursor:crosshair}
 .swatches{display:flex;flex-wrap:wrap;gap:6px}
 .swatch{width:26px;height:26px;border-radius:50%;background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
 .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--fg)}
@@ -201,11 +217,13 @@ kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
     <button class="btn quiet" id="backup" type="button" hidden>Save backup</button>
     <button class="btn quiet" id="restore" type="button" hidden>Open backup</button>
     <input type="file" id="restore-file" accept=".json,application/json" hidden>
+    <button class="btn" id="addgroup" type="button" hidden>Add group</button>
     <button class="btn primary" id="add" type="button" disabled>Add point</button>
   </header>
   <main class="main">
     <section class="board" id="board" tabindex="-1" aria-label="Idea map">
       <div id="canvas">
+        <div id="frames"></div>
         <svg id="links" aria-hidden="true"></svg>
         <svg id="wiresvg" aria-hidden="true"><line id="wire" class="wire" x1="0" y1="0" x2="0" y2="0" visibility="hidden"/></svg>
         <div class="empty" id="empty">
@@ -264,6 +282,7 @@ const TEXT_PAUSE=500,MAX_WRITES=4;
 let points=new Map(),links=new Map();
 /* photos: `pics` holds small records {card,o,w,h}; the picture itself is a separate `picdata` document, fetched when shown */
 let pics=new Map(),picsReady=false,lb=null;
+let groups=new Map(),groupsReady=false,selGroup=null,drawMode=false,gdraw=null,gdrag=null;
 const picCache=new Map(),picLoading=new Map(),MAX_PIC=900000;
 let sel=new Set(),selLink=null,drag=null,wire=null,pan=null,mq=null;
 let lastColor="grey",lineMode="all";
@@ -275,7 +294,7 @@ let hadView=false,fitted=false;
 /* `db` is the small store API that startShared() is handed (Firestore, through the module script at the end) */
 let db=null,canWriteKnown=null,unsubs=[];
 let readOnly=false,offline=false,unconfigured=false,notMember=false,live=false,slow=false;
-const latest={points:null,links:null,pics:null},loaded={points:false,links:false},remoteIds={points:new Set(),links:new Set(),pics:new Set()};
+const latest={points:null,links:null,pics:null,groups:null},loaded={points:false,links:false},remoteIds={points:new Set(),links:new Set(),pics:new Set(),groups:new Set()};
 const roCollapsed=new Map();
 let held=false,lastSig="",panelStale=false,panelPointer=false,pendingRestore=null;
 let failMsg="",flashUntil=0,flashT=0;
@@ -385,7 +404,7 @@ function onWriteError(path,op,e){
 function goReadOnly(){
   if(readOnly)return;
   readOnly=true;W.clear();waiting.clear();
-  document.body.classList.add("ro");$("#restore").hidden=true;
+  document.body.classList.add("ro");$("#restore").hidden=true;$("#addgroup").hidden=true;endDrawMode();
   sync(true);refreshStatus();
 }
 
@@ -407,6 +426,9 @@ function rebuild(col){
   if(col==="points"){
     for(const [id,c] of roCollapsed){const p=m.get(id);if(p)m.set(id,{...p,collapsed:c})}
     points=m;
+  }else if(col==="groups"){
+    for(const [id,g] of m)if(!g||!isFinite(+g.x)||!isFinite(+g.y)||!(+g.w>0)||!(+g.h>0))m.delete(id);
+    groups=m;
   }else if(col==="pics"){
     for(const [id,q] of m)if(!q||typeof q.card!=="string")m.delete(id);
     pics=m;
@@ -416,11 +438,12 @@ function rebuild(col){
   }
 }
 function sync(force){
-  if(!force&&(drag||wire||mq)){held=true;return}
+  if(!force&&(drag||wire||mq||gdrag||gdraw)){held=true;return}
   held=false;
-  rebuild("points");rebuild("links");rebuild("pics");
+  rebuild("points");rebuild("links");rebuild("pics");rebuild("groups");
   sel=new Set([...sel].filter(i=>points.has(i)&&!isHidden(points.get(i))));
   if(selLink&&!links.has(selLink))selLink=null;
+  if(selGroup&&!groups.has(selGroup))selGroup=null;
   renderBoard();
   if(!fitted&&!hadView&&points.size){fitted=true;fitView()}
   if(force||panelSig()!==lastSig){if(editingPanel()&&!force)panelStale=true;else renderPanel()}
@@ -448,7 +471,7 @@ function listen(col){
 let slowT=0;
 function subscribe(){
   slowT=setTimeout(()=>{if(!live){slow=true;refreshStatus();renderEmpty()}},10000);
-  listen("points");listen("links");listenPics();
+  listen("points");listen("links");listenPics();listenGroups();
 }
 /* photos have their own listener: if the database rules don't allow photos yet, the map still works and the photo badges stay hidden */
 function listenPics(){
@@ -467,6 +490,7 @@ function listenPics(){
 const sj=o=>o?JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k]])):"-";
 function panelSig(){
   if(pendingRestore)return "R";
+  if(selGroup)return "G"+sj(groups.get(selGroup));
   if(selLink){const l=links.get(selLink);return "L"+sj(l)+(l?titleOf(l.from)+"|"+titleOf(l.to):"")}
   if(sel.size>1)return "M"+[...sel].map(i=>sj(points.get(i))).join();
   const id=one();if(!id)return "N"+readOnly;
@@ -515,11 +539,12 @@ function cardExtents(){
     const dr=el.querySelector(".drawer"),h=el.offsetHeight+(dr?dr.offsetHeight:0);
     x0=Math.min(x0,el.offsetLeft);y0=Math.min(y0,el.offsetTop);x1=Math.max(x1,el.offsetLeft+el.offsetWidth);y1=Math.max(y1,el.offsetTop+h);
   }
+  for(const el of cv.querySelectorAll(".gf")){x0=Math.min(x0,el.offsetLeft);y0=Math.min(y0,el.offsetTop-16);x1=Math.max(x1,el.offsetLeft+el.offsetWidth);y1=Math.max(y1,el.offsetTop+el.offsetHeight)}
   return{x0,y0,x1,y1};
 }
 function fitView(){
   const W_=bd.clientWidth,H=bd.clientHeight;
-  if(!points.size||!W_||!H){view.x=0;view.y=0;view.z=1;applyView();return}
+  if((!points.size&&!groups.size)||!W_||!H){view.x=0;view.y=0;view.z=1;applyView();return}
   const {x0,y0,x1,y1}=cardExtents();
   const pad=60,z=clampZ(Math.min(1,(W_-pad*2)/Math.max(1,x1-x0),(H-pad*2)/Math.max(1,y1-y0)));
   view.z=z;view.x=(W_-(x1-x0)*z)/2-x0*z;view.y=(H-(y1-y0)*z)/2-y0*z;applyView();
@@ -542,6 +567,7 @@ function renderEmpty(){
 
 const CAM='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="5.5" cy="6.5" r="1.3" fill="currentColor"/><path d="M2.5 12 6.5 8.5 9 10.5 11 8.8 14 11.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
 function renderBoard(){
+  renderFrames();
   cv.querySelectorAll(".card").forEach(n=>n.remove());
   const nPics=new Map();for(const q of pics.values())nPics.set(q.card,(nPics.get(q.card)||0)+1);
   for(const p of points.values()){
@@ -615,10 +641,10 @@ function drawLinks(){
 }
 
 /* ---------- selection ---------- */
-function select(id){sel=new Set(id&&points.has(id)?[id]:[]);selLink=null;pendingRestore=null;render()}
-function selectMany(ids){sel=new Set(ids.filter(isCard));selLink=null;pendingRestore=null;render()}
-function toggleSel(id){const s=new Set([...sel].filter(isCard));if(s.has(id))s.delete(id);else s.add(id);sel=s;selLink=null;pendingRestore=null;render()}
-function selectLink(id){selLink=id&&links.has(id)?id:null;sel=new Set();pendingRestore=null;render()}
+function select(id){sel=new Set(id&&points.has(id)?[id]:[]);selLink=null;selGroup=null;pendingRestore=null;render()}
+function selectMany(ids){sel=new Set(ids.filter(isCard));selLink=null;selGroup=null;pendingRestore=null;render()}
+function toggleSel(id){const s=new Set([...sel].filter(isCard));if(s.has(id))s.delete(id);else s.add(id);sel=s;selLink=null;selGroup=null;pendingRestore=null;render()}
+function selectLink(id){selLink=id&&links.has(id)?id:null;sel=new Set();selGroup=null;pendingRestore=null;render()}
 function goTo(id){const p=points.get(id);if(!p)return;const par=parentOf(p);if(par&&par.collapsed)setCollapsed(par.id,false);select(id)}
 
 /* ---------- drop-down items ---------- */
@@ -667,7 +693,7 @@ function wireSwatches(root,fn){root.querySelectorAll(".swatch").forEach(b=>b.add
 function lockPanel(pb){
   if(!readOnly)return;
   pb.querySelectorAll("input,textarea,.swatch,.seg input,#kadd,#kup,#kdn").forEach(el=>el.disabled=true);
-  pb.querySelectorAll("#pdel,#ldel,#mdel").forEach(el=>el.hidden=true);
+  pb.querySelectorAll("#pdel,#ldel,#mdel,#gdel,#mgroup").forEach(el=>el.hidden=true);
 }
 
 function renderPanel(){
@@ -683,6 +709,22 @@ function renderPanel(){
     $("#rok").addEventListener("click",()=>{const b=pendingRestore;pendingRestore=null;replaceAll(b)});
     $("#rno").addEventListener("click",()=>{pendingRestore=null;renderPanel()});
     lastSig=panelSig();return;
+  }
+  const gr=selGroup&&groups.get(selGroup);
+  if(gr){
+    const n=groupMembers(gr).cards.length;
+    pb.innerHTML=
+      '<div class="ph"><span class="lab">Group</span><button class="btn" id="gdel" type="button">Delete group</button></div>'+
+      '<div class="field"><label class="lab" for="g-title">Title</label><input id="g-title" value="'+esc(gr.title||"")+'" autocomplete="off"></div>'+
+      '<div class="field"><label class="lab" for="g-note">Note</label><textarea id="g-note" rows="4">'+esc(gr.note||"")+'</textarea></div>'+
+      '<div class="field"><span class="lab">Colour</span>'+swatchRow("g-colour",COLORS.includes(gr.color)?gr.color:"",true)+'</div>'+
+      '<p class="hint">'+n+' card'+(n===1?'':'s')+' inside.'+(readOnly?'':' Drag the title tab or the border to move the group with every card inside it. Drag the bottom-right corner to resize it. Deleting the group keeps its cards.')+'</p>';
+    const id=gr.id;
+    $("#g-title").addEventListener("input",e=>{saveGroup(id,{title:e.target.value},TEXT_PAUSE);renderFrames()});
+    $("#g-note").addEventListener("input",e=>{saveGroup(id,{note:e.target.value},TEXT_PAUSE);renderFrames()});
+    wireSwatches($("#g-colour"),c=>{saveGroup(id,{color:c});renderFrames()});
+    $("#gdel").addEventListener("click",()=>deleteGroup(id));
+    lockPanel(pb);lastSig=panelSig();return;
   }
   const l=selLink&&links.get(selLink);
   if(l){
@@ -706,7 +748,7 @@ function renderPanel(){
     const cur=cols.size===1?[...cols][0]:null,curW=ws.size===1?[...ws][0]:null;
     const shown=ps.slice(0,8);
     pb.innerHTML=
-      '<div class="ph"><span class="lab">'+ps.length+' points selected</span><button class="btn" id="mdel" type="button">Delete all</button></div>'+
+      '<div class="ph"><span class="lab">'+ps.length+' points selected</span><span>'+(groupsReady&&!readOnly?'<button class="btn" id="mgroup" type="button">Group these</button> ':'')+'<button class="btn" id="mdel" type="button">Delete all</button></span></div>'+
       '<ul class="picked">'+shown.map(p=>'<li><i class="cd" style="'+(pcol(p)?'--c:var(--c-'+pcol(p)+')':'')+'"></i><span>'+esc(p.title||"Untitled")+'</span></li>').join("")+(ps.length>shown.length?'<li><span class="hint">and '+(ps.length-shown.length)+' more</span></li>':'')+'</ul>'+
       '<div class="field"><span class="lab">Colour for all</span>'+swatchRow("m-colour",cur,true)+'</div>'+
       '<div class="field"><span class="lab">Weight for all</span>'+weightSeg("m-weight",curW,"Weight for all")+'</div>'+
@@ -715,6 +757,7 @@ function renderPanel(){
     wireSwatches($("#m-colour"),c=>{ids.forEach(i=>savePoint(i,{color:c}));renderBoard()});
     pb.querySelectorAll('input[name="m-weight"]').forEach(r=>r.addEventListener("change",()=>{ids.forEach(i=>savePoint(i,{weight:+r.value}));renderBoard()}));
     $("#mdel").addEventListener("click",()=>deletePoints(ids));
+    const mg=$("#mgroup");if(mg)mg.addEventListener("click",()=>groupAround(ids));
     lockPanel(pb);lastSig=panelSig();return;
   }
   const p=one()&&points.get(one());
@@ -731,6 +774,7 @@ function renderPanel(){
       '<li>Drag from a dot on either side of a card onto another card to connect them.</li>'+
       '<li>Click a line to write a note on it or change its colour or weight. A dot in the middle of a line means it has a note.</li>'+
       '<li>Use Lines at the bottom left to show every line, only the selected card\'s lines (Connected), or none (Hidden).</li>'+
+      '<li>Press Add group and drag on the board to draw a group, or select some cards and press Group these. Give it a title and a note. Drag its title tab or border to move it with every card inside; drag its corner to resize.</li>'+
       '<li>Select a card, an item or a line and press <kbd>Delete</kbd> to remove it. <kbd>Ctrl</kbd>+<kbd>Z</kbd> brings back what you deleted.</li></ol>'+
       '<p class="hint">Changes save by themselves and show up for everyone on the map.</p>');
     lastSig=panelSig();return;
@@ -828,6 +872,7 @@ function undoDelete(){
   const u=undo.pop();if(!u){flash("Nothing to undo");return}
   u.points.forEach(p=>{if(p.parent&&!points.has(p.parent)&&!u.points.some(q=>q.id===p.parent))return;points.set(p.id,p);put("points",p.id,p)});
   u.links.forEach(l=>{if(points.has(l.from)&&points.has(l.to)){links.set(l.id,l);put("links",l.id,l)}});
+  (u.groups||[]).forEach(g=>{groups.set(g.id,g);put("groups",g.id,g);selGroup=g.id});
   restorePics(u);
   if(lb)renderPp();
   if(u.points.length){const back=u.points.filter(p=>points.has(p.id));const main=back.filter(p=>isCard(p.id));sel=new Set((main.length?main:back).filter(p=>!isHidden(p)).map(p=>p.id));selLink=null}
@@ -851,6 +896,13 @@ bd.addEventListener("pointerdown",e=>{
   if(e.target.closest(".zoombar,.linebar"))return;
   if(e.button!==undefined&&e.button!==0&&e.button!==1)return;
   const mid=e.button===1,mod=e.ctrlKey||e.metaKey;
+  if(drawMode&&!mid){
+    e.preventDefault();
+    const div=document.createElement("div");div.className="marquee";bd.appendChild(div);
+    gdraw={sx:e.clientX,sy:e.clientY,start:pt(e),el:div};
+    try{bd.setPointerCapture(e.pointerId)}catch(_){}
+    return;
+  }
   const act=mid?null:e.target.closest("[data-act]");
   if(act){
     e.preventDefault();e.stopPropagation();
@@ -871,6 +923,16 @@ bd.addEventListener("pointerdown",e=>{
   }
   const hit=mid?null:e.target.closest("[data-link]");
   if(hit){e.preventDefault();selectLink(hit.dataset.link);bd.focus({preventScroll:true});return}
+  const gh=mid?null:e.target.closest("[data-gbar],[data-gedge],[data-gsize]");
+  if(gh){
+    e.preventDefault();
+    const gid=gh.closest(".gf").dataset.gid,g=groups.get(gid);if(!g)return;
+    if(readOnly){selectGroup(gid);return}
+    const base={gid,sx:e.clientX,sy:e.clientY,ox:+g.x,oy:+g.y,ow:+g.w,oh:+g.h,moved:false};
+    gdrag=gh.dataset.gsize?{...base,mode:"size"}:{...base,mode:"move",...groupMembers(g)};
+    try{gh.setPointerCapture(e.pointerId)}catch(_){}
+    return;
+  }
   const el=mid?null:e.target.closest(".card");
   if(!el){
     e.preventDefault();
@@ -894,6 +956,13 @@ bd.addEventListener("pointerdown",e=>{
   try{el.setPointerCapture(e.pointerId)}catch(_){}
 });
 bd.addEventListener("pointermove",e=>{
+  if(gdraw){
+    const r=bd.getBoundingClientRect();
+    const x0=Math.min(gdraw.sx,e.clientX)-r.left,y0=Math.min(gdraw.sy,e.clientY)-r.top,x1=Math.max(gdraw.sx,e.clientX)-r.left,y1=Math.max(gdraw.sy,e.clientY)-r.top;
+    gdraw.el.style.cssText="left:"+x0+"px;top:"+y0+"px;width:"+(x1-x0)+"px;height:"+(y1-y0)+"px";
+    return;
+  }
+  if(gdrag){moveGroupDrag(e);return}
   if(wire){
     const p=pt(e),w=$("#wire");w.setAttribute("x2",p.x);w.setAttribute("y2",p.y);
     const c=cardAt(e),t=c&&c.dataset.id!==wire.from?c:null;
@@ -975,9 +1044,9 @@ function endMarquee(cancel){
   else if(m.moved)selectMany([...m.hits]);
   if(held)sync();
 }
-bd.addEventListener("pointerup",e=>{if(wire)endWire(e,false);else if(mq)endMarquee(false);else if(pan)endPan();else endDrag()});
-bd.addEventListener("pointercancel",e=>{if(wire)endWire(e,true);else if(mq)endMarquee(true);else if(pan)endPan();else endDrag()});
-bd.addEventListener("dblclick",e=>{if(readOnly||e.shiftKey||e.target.closest(".card,[data-link],.zoombar,.linebar"))return;createPoint(pt(e))});
+bd.addEventListener("pointerup",e=>{if(gdraw)endGroupDraw(e,false);else if(gdrag)endGroupDrag(false);else if(wire)endWire(e,false);else if(mq)endMarquee(false);else if(pan)endPan();else endDrag()});
+bd.addEventListener("pointercancel",e=>{if(gdraw)endGroupDraw(e,true);else if(gdrag)endGroupDrag(true);else if(wire)endWire(e,true);else if(mq)endMarquee(true);else if(pan)endPan();else endDrag()});
+bd.addEventListener("dblclick",e=>{if(readOnly||e.shiftKey||e.target.closest(".card,[data-link],.zoombar,.linebar,.gf-bar,.gf-edge,.gf-size"))return;createPoint(pt(e))});
 bd.addEventListener("wheel",e=>{
   if(e.target.closest(".zoombar,.linebar"))return;
   e.preventDefault();
@@ -987,6 +1056,8 @@ bd.addEventListener("wheel",e=>{
 /* two-finger pinch on a phone or tablet: zoom around the fingers, and move the board with them */
 const touches=new Map();let pinch=null;
 function cancelGesture(){
+  if(gdraw)endDrawMode();
+  if(gdrag)endGroupDrag(true);
   if(drag){const d=drag;drag=null;if(d.moved){d.items.forEach(it=>{const q=points.get(it.id);if(q){q.x=it.ox;q.y=it.oy}});if(d.created)points.delete(d.id)}renderBoard()}
   if(wire){wire=null;document.body.classList.remove("wiring");$("#wire").setAttribute("visibility","hidden");cv.querySelectorAll(".card.target").forEach(c=>c.classList.remove("target"))}
   if(mq){const m=mq;mq=null;bd.classList.remove("boxing");m.el.remove();renderBoard()}
@@ -1065,11 +1136,13 @@ document.addEventListener("keydown",e=>{
   if(typing(e.target))return;
   if(e.key==="Delete"||e.key==="Backspace"){
     if(readOnly)return;
-    if(selLink){e.preventDefault();deleteLink(selLink)}
+    if(selGroup){e.preventDefault();deleteGroup(selGroup)}
+    else if(selLink){e.preventDefault();deleteLink(selLink)}
     else if(sel.size){e.preventDefault();deletePoints([...sel])}
   }else if(mod&&!e.shiftKey&&(e.key==="z"||e.key==="Z")){e.preventDefault();undoDelete()}
   else if(mod&&(e.key==="a"||e.key==="A")){e.preventDefault();selectMany([...points.keys()])}
-  else if(e.key==="Escape"&&(sel.size||selLink||pendingRestore)){select(null)}
+  else if(e.key==="Escape"&&drawMode){endDrawMode()}
+  else if(e.key==="Escape"&&(sel.size||selLink||selGroup||pendingRestore)){select(null)}
 });
 $("#add").addEventListener("click",()=>createPoint(null));
 window.addEventListener("resize",()=>drawLinks());
@@ -1283,7 +1356,7 @@ document.addEventListener("pointerover",e=>{
   const icon=tg.closest(".pic"),inPp=tg.closest("#pp,#fs");
   if(icon||inPp)clearTimeout(ppCloseT);
   if(icon){
-    if(drag||wire||mq||pan)return;
+    if(drag||wire||mq||pan||gdrag||gdraw||drawMode)return;
     const id=icon.closest(".card").dataset.id;
     if(!picsOf(id).length)return;
     if(lb&&(lb.card===id||lb.pinned))return;
@@ -1297,11 +1370,111 @@ document.addEventListener("pointerover",e=>{
 document.addEventListener("pointerdown",e=>{if(lb&&!(e.target.closest&&e.target.closest("#pp,.pic,#fs")))closePp()},true);
 window.addEventListener("resize",()=>{if(lb)placePp()});
 
+/* ---------- groups: a titled frame; dragging its tab or border moves every card inside it ---------- */
+const GMIN_W=160,GMIN_H=100;
+const gcol=g=>COLORS.includes(g.color)?"var(--c-"+g.color+")":"var(--muted)";
+const frameEl=id=>$("#frames").querySelector('.gf[data-gid="'+CSS.escape(id)+'"]');
+function renderFrames(){
+  const box=$("#frames");box.innerHTML="";
+  for(const g of [...groups.values()].sort((a,b)=>b.w*b.h-a.w*a.h)){
+    const el=document.createElement("div");
+    el.className="gf"+(g.id===selGroup?" sel":"");el.dataset.gid=g.id;
+    el.style.cssText="left:"+(+g.x)+"px;top:"+(+g.y)+"px;width:"+(+g.w)+"px;height:"+(+g.h)+"px;--gc:"+gcol(g);
+    el.innerHTML='<div class="gf-bar" data-gbar="1" title="Drag to move the group with its cards">'+esc(g.title||"Untitled group")+'</div>'+
+      (String(g.note||"").trim()?'<div class="gf-note">'+esc(g.note)+'</div>':'')+
+      '<i class="gf-edge t" data-gedge="1"></i><i class="gf-edge b" data-gedge="1"></i><i class="gf-edge l" data-gedge="1"></i><i class="gf-edge r" data-gedge="1"></i>'+
+      '<i class="gf-size" data-gsize="1" title="Drag to resize"></i>';
+    box.appendChild(el);
+  }
+}
+function selectGroup(id){sel=new Set();selLink=null;pendingRestore=null;selGroup=id&&groups.has(id)?id:null;render()}
+function createGroup(x,y,w,h){
+  if(readOnly||!db||!groupsReady)return;
+  const id=newId(),g={id,title:"New group",note:"",color:"",x:snap(x),y:snap(y),w:Math.max(GMIN_W,snap(w)),h:Math.max(GMIN_H,snap(h))};
+  groups.set(id,g);put("groups",id,g);selectGroup(id);
+  const t=$("#g-title");if(t){t.focus();t.select()}
+}
+function groupAround(ids){
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const id of ids){const el=cardEl(id);if(!el)continue;const dr=el.querySelector(".drawer"),h=el.offsetHeight+(dr?dr.offsetHeight:0);x0=Math.min(x0,el.offsetLeft);y0=Math.min(y0,el.offsetTop);x1=Math.max(x1,el.offsetLeft+el.offsetWidth);y1=Math.max(y1,el.offsetTop+h)}
+  if(isFinite(x0))createGroup(x0-30,y0-50,x1-x0+60,y1-y0+80);
+}
+function saveGroup(id,ch,delay){if(readOnly)return;const g=groups.get(id);if(!g)return;groups.set(id,{...g,...ch});patch("groups",id,ch,delay);lastSig=panelSig()}
+function deleteGroup(id){
+  if(readOnly)return;const g=groups.get(id);if(!g)return;
+  undo.push({points:[],links:[],groups:[g]});if(undo.length>30)undo.shift();
+  groups.delete(id);drop("groups",id);if(selGroup===id)selGroup=null;
+  flash("Group deleted; its cards stay. Press Ctrl+Z to undo");render();bd.focus({preventScroll:true});
+}
+function startDrawMode(){if(readOnly||!groupsReady)return;if(lb)closePp();drawMode=true;bd.classList.add("drawing");flash("Drag on the board to draw the group. Esc cancels")}
+function endDrawMode(){drawMode=false;bd.classList.remove("drawing");if(gdraw){gdraw.el.remove();gdraw=null}}
+/* what moves with a group: cards whose centre is inside it, and smaller groups wholly inside it */
+function groupMembers(g){
+  const inside=(x,y)=>x>=g.x&&x<=g.x+g.w&&y>=g.y&&y<=g.y+g.h;
+  const cards=[...cv.querySelectorAll(".card")].filter(c=>inside(c.offsetLeft+c.offsetWidth/2,c.offsetTop+c.offsetHeight/2)).map(c=>{const q=points.get(c.dataset.id);return q?{id:q.id,el:c,ox:+q.x||0,oy:+q.y||0}:null}).filter(Boolean);
+  const subs=[...groups.values()].filter(o=>o.id!==g.id&&o.x>=g.x&&o.y>=g.y&&o.x+o.w<=g.x+g.w&&o.y+o.h<=g.y+g.h).map(o=>({id:o.id,ox:o.x,oy:o.y}));
+  return{cards,subs};
+}
+function moveGroupDrag(e){
+  const d=gdrag,dx=(e.clientX-d.sx)/view.z,dy=(e.clientY-d.sy)/view.z;
+  if(!d.moved&&Math.hypot(dx,dy)*view.z<4)return;
+  d.moved=true;
+  const g=groups.get(d.gid);if(!g)return;const fe=frameEl(g.id);
+  if(d.mode==="size"){g.w=Math.max(GMIN_W,snap(d.ow+dx));g.h=Math.max(GMIN_H,snap(d.oh+dy));if(fe){fe.style.width=g.w+"px";fe.style.height=g.h+"px"}return}
+  const mx=snap(d.ox+dx)-d.ox,my=snap(d.oy+dy)-d.oy;
+  g.x=d.ox+mx;g.y=d.oy+my;if(fe){fe.style.left=g.x+"px";fe.style.top=g.y+"px"}
+  for(const it of d.cards){const q=points.get(it.id);if(q){q.x=it.ox+mx;q.y=it.oy+my}if(it.el){it.el.style.left=(it.ox+mx)+"px";it.el.style.top=(it.oy+my)+"px";it.el.classList.add("dragging")}}
+  for(const it of d.subs){const o=groups.get(it.id);if(o){o.x=it.ox+mx;o.y=it.oy+my;const se=frameEl(o.id);if(se){se.style.left=o.x+"px";se.style.top=o.y+"px"}}}
+  drawLinks();
+}
+function endGroupDrag(cancel){
+  const d=gdrag;gdrag=null;if(!d)return;
+  const g=groups.get(d.gid);
+  if(d.moved&&cancel){
+    if(g){g.x=d.ox;g.y=d.oy;g.w=d.ow;g.h=d.oh}
+    (d.cards||[]).forEach(it=>{const q=points.get(it.id);if(q){q.x=it.ox;q.y=it.oy}});
+    (d.subs||[]).forEach(it=>{const o=groups.get(it.id);if(o){o.x=it.ox;o.y=it.oy}});
+    renderBoard();
+  }else if(d.moved&&g){
+    if(d.mode==="size")patch("groups",g.id,{w:g.w,h:g.h});
+    else{
+      patch("groups",g.id,{x:g.x,y:g.y});
+      d.cards.forEach(it=>{const q=points.get(it.id);if(q)patch("points",it.id,{x:q.x,y:q.y})});
+      d.subs.forEach(it=>{const o=groups.get(it.id);if(o)patch("groups",it.id,{x:o.x,y:o.y})});
+    }
+    selGroup=g.id;sel=new Set();selLink=null;pendingRestore=null;render();
+  }else if(!cancel)selectGroup(d.gid);
+  if(held)sync();
+}
+function endGroupDraw(e,cancel){
+  const d=gdraw;if(!d)return;const b=pt(e);
+  endDrawMode();
+  if(cancel)return;
+  const a=d.start;let x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y);
+  if(w<40||h<40){w=420;h=280;x=a.x;y=a.y}
+  createGroup(x,y,w,h);
+  if(held)sync();
+}
+function listenGroups(){
+  const api=db;
+  unsubs.push(api.collection("groups").onSnapshot(snap=>{
+    if(db!==api)return;
+    latest.groups=snap;
+    if(!groupsReady){groupsReady=true;$("#addgroup").hidden=readOnly}
+    sync();
+  },()=>{
+    if(db!==api)return;
+    groupsReady=false;$("#addgroup").hidden=true;endDrawMode();
+  }));
+}
+$("#addgroup").addEventListener("click",()=>{if(drawMode)endDrawMode();else startDrawMode()});
+
 /* ---------- backup ---------- */
 function toData(){
   const o={app:"ODP Thela Map",version:1,lastColor,points:{},links:{}};
   for(const [k,p] of points){const {id,...r}=p;o.points[k]=r}
   for(const [k,l] of links){const {id,...r}=l;o.links[k]=r}
+  o.groups={};for(const [k,g] of groups){const {id,...r}=g;o.groups[k]=r}
   return o;
 }
 $("#backup").addEventListener("click",()=>{
@@ -1330,7 +1503,13 @@ function replaceAll(v){
   for(const id of points.keys())if(!np.has(id))drop("points",id);
   for(const [id,p] of np)put("points",id,p);
   for(const [id,l] of nl)put("links",id,l);
-  points=np;links=nl;sel=new Set();selLink=null;undo.length=0;
+  if(v.groups&&typeof v.groups==="object"){
+    const ng=new Map(Object.entries(v.groups).filter(([k,g])=>okId(k)&&g&&isFinite(+g.x)&&isFinite(+g.y)&&+g.w>0&&+g.h>0).map(([k,g])=>[k,{...g,id:k}]));
+    for(const id of groups.keys())if(!ng.has(id))drop("groups",id);
+    for(const [id,g] of ng)put("groups",id,g);
+    groups=ng;
+  }
+  points=np;links=nl;sel=new Set();selLink=null;selGroup=null;undo.length=0;
   if(COLORS.includes(v.lastColor))setLastColor(v.lastColor);
   flash("Backup opened for everyone");render();fitView();
 }
@@ -1339,7 +1518,7 @@ function replaceAll(v){
 function startShared(api){
   stopShared(true);
   db=api;offline=false;notMember=false;readOnly=false;live=false;slow=false;failMsg="";tries=0;
-  loaded.points=loaded.links=false;latest.points=latest.links=latest.pics=null;picsReady=false;document.body.classList.add("nopics");
+  loaded.points=loaded.links=false;latest.points=latest.links=latest.pics=latest.groups=null;picsReady=false;groupsReady=false;$("#addgroup").hidden=true;document.body.classList.add("nopics");
   document.body.classList.remove("ro");
   $("#add").disabled=false;$("#backup").hidden=false;$("#restore").hidden=false;
   subscribe();render();refreshStatus();
@@ -1349,7 +1528,8 @@ function stopShared(quiet){
   unsubs.forEach(u=>{try{u()}catch(_){}});unsubs=[];clearTimeout(slowT);
   db=null;W.clear();waiting.clear();roCollapsed.clear();
   closePp();
-  points=new Map();links=new Map();pics=new Map();sel=new Set();selLink=null;undo.length=0;pendingRestore=null;fitted=false;notMember=false;
+  endDrawMode();gdrag=null;
+  points=new Map();links=new Map();pics=new Map();groups=new Map();selGroup=null;sel=new Set();selLink=null;undo.length=0;pendingRestore=null;fitted=false;notMember=false;
   if(quiet)return;
   offline=true;document.body.classList.add("ro");
   $("#add").disabled=true;$("#backup").hidden=true;$("#restore").hidden=true;

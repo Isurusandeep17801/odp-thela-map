@@ -7,9 +7,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 /* Layout: an endless graph-paper board you pan and zoom, idea cards with pale drop-down lists, joined by coloured, weighted curves, and a narrow editing sheet on the right. Shared live through the artifact's database */
-:root{--bg:#E9ECE6;--paper:#F7F8F5;--panel:#FFFFFF;--card:#FFFFFF;--fg:#1C211E;--muted:#59625C;--line:#D2D7CF;--grid:rgba(30,60,45,.06);--grid2:rgba(30,60,45,.12);--accent:#4B36C8;--accent-ink:#FFFFFF;--tint:rgba(75,54,200,.08);--danger:#B42318;--ok:#15803D;--warn:#8A5300;--desat:#8A8F8C;--c-grey:#6B7280;--c-red:#DC2626;--c-orange:#EA580C;--c-yellow:#CA8A04;--c-green:#16A34A;--c-teal:#0D9488;--c-blue:#2563EB;--c-purple:#7C3AED;--f-ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101311;--paper:#171B19;--panel:#1D221F;--card:#232925;--fg:#E3E8E4;--muted:#9AA39C;--line:#353D38;--grid:rgba(255,255,255,.035);--grid2:rgba(255,255,255,.075);--accent:#A394FF;--accent-ink:#15121F;--tint:rgba(163,148,255,.12);--danger:#FF7B6B;--ok:#55CF80;--warn:#F0B44A;--desat:#7E8580;--c-grey:#9CA3AF;--c-red:#F87171;--c-orange:#FB923C;--c-yellow:#FACC15;--c-green:#4ADE80;--c-teal:#2DD4BF;--c-blue:#60A5FA;--c-purple:#A78BFA;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#101311;--paper:#171B19;--panel:#1D221F;--card:#232925;--fg:#E3E8E4;--muted:#9AA39C;--line:#353D38;--grid:rgba(255,255,255,.035);--grid2:rgba(255,255,255,.075);--accent:#A394FF;--accent-ink:#15121F;--tint:rgba(163,148,255,.12);--danger:#FF7B6B;--ok:#55CF80;--warn:#F0B44A;--desat:#7E8580;--c-grey:#9CA3AF;--c-red:#F87171;--c-orange:#FB923C;--c-yellow:#FACC15;--c-green:#4ADE80;--c-teal:#2DD4BF;--c-blue:#60A5FA;--c-purple:#A78BFA;color-scheme:dark}
+:root{--bg:#E9ECE6;--paper:#F7F8F5;--panel:#FFFFFF;--card:#FFFFFF;--fg:#1C211E;--muted:#59625C;--line:#D2D7CF;--grid:rgba(30,60,45,.06);--grid2:rgba(30,60,45,.12);--accent:#4B36C8;--accent-ink:#FFFFFF;--tint:rgba(75,54,200,.08);--danger:#B42318;--ok:#15803D;--warn:#8A5300;--desat:#8A8F8C;--c-grey:#6B7280;--c-red:#DC2626;--c-orange:#EA580C;--c-yellow:#CA8A04;--c-green:#16A34A;--c-teal:#0D9488;--c-blue:#2563EB;--c-purple:#7C3AED;--c-ink:#1F2937;--c-brown:#92400E;--c-maroon:#9F1239;--c-pink:#DB2777;--c-lime:#65A30D;--c-cyan:#0891B2;--c-indigo:#4F46E5;--c-magenta:#C026D3;--f-ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101311;--paper:#171B19;--panel:#1D221F;--card:#232925;--fg:#E3E8E4;--muted:#9AA39C;--line:#353D38;--grid:rgba(255,255,255,.035);--grid2:rgba(255,255,255,.075);--accent:#A394FF;--accent-ink:#15121F;--tint:rgba(163,148,255,.12);--danger:#FF7B6B;--ok:#55CF80;--warn:#F0B44A;--desat:#7E8580;--c-grey:#9CA3AF;--c-red:#F87171;--c-orange:#FB923C;--c-yellow:#FACC15;--c-green:#4ADE80;--c-teal:#2DD4BF;--c-blue:#60A5FA;--c-purple:#A78BFA;--c-ink:#E5E7EB;--c-brown:#C8956A;--c-maroon:#E2557A;--c-pink:#F472B6;--c-lime:#A3E635;--c-cyan:#22D3EE;--c-indigo:#818CF8;--c-magenta:#E879F9;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101311;--paper:#171B19;--panel:#1D221F;--card:#232925;--fg:#E3E8E4;--muted:#9AA39C;--line:#353D38;--grid:rgba(255,255,255,.035);--grid2:rgba(255,255,255,.075);--accent:#A394FF;--accent-ink:#15121F;--tint:rgba(163,148,255,.12);--danger:#FF7B6B;--ok:#55CF80;--warn:#F0B44A;--desat:#7E8580;--c-grey:#9CA3AF;--c-red:#F87171;--c-orange:#FB923C;--c-yellow:#FACC15;--c-green:#4ADE80;--c-teal:#2DD4BF;--c-blue:#60A5FA;--c-purple:#A78BFA;--c-ink:#E5E7EB;--c-brown:#C8956A;--c-maroon:#E2557A;--c-pink:#F472B6;--c-lime:#A3E635;--c-cyan:#22D3EE;--c-indigo:#818CF8;--c-magenta:#E879F9;color-scheme:dark}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-ui)}
 *{box-sizing:border-box}
@@ -157,10 +157,14 @@ body.ro .card{cursor:pointer}
 body.ro .gf-size{display:none}
 body.ro .gf-bar,body.ro .gf-edge{cursor:pointer}
 .board.drawing,.board.drawing .card,.board.drawing .gf-bar,.board.drawing .gf-edge{cursor:crosshair}
-.swatches{display:flex;flex-wrap:wrap;gap:6px}
-.swatch{width:26px;height:26px;border-radius:50%;background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.swatches{display:flex;flex-wrap:wrap;gap:4px}
+.swatch{width:24px;height:24px;border-radius:50%;background:var(--c);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
 .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--fg)}
 .swatch:disabled{cursor:default;opacity:.6}
+.swatch.any{position:relative;display:inline-block;box-sizing:border-box;background:conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ec4899,#ef4444)}
+.swatch.any.on{background:var(--c);box-shadow:0 0 0 2px var(--fg)}
+.swatch.any input{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);opacity:0;cursor:pointer;border:0;padding:0;margin:0}
+.swatch.any:has(input:disabled){cursor:default;opacity:.6}
 .swatch.none{background:var(--card) linear-gradient(135deg,transparent 44%,var(--muted) 44%,var(--muted) 56%,transparent 56%)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:auto;min-width:0}
 #pbody{padding:16px;display:grid;gap:14px}
@@ -272,7 +276,10 @@ kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
 
 <script>
 const KEY="odp-idea-map";
-const COLORS=["grey","red","orange","yellow","green","teal","blue","purple"];
+const COLORS=["grey","ink","brown","maroon","red","pink","orange","yellow","lime","green","teal","cyan","blue","indigo","purple","magenta"];
+/* a colour is a palette name or any "#rrggbb" picked with the any-colour swatch */
+const okC=c=>COLORS.includes(c)||/^#[0-9a-f]{6}$/i.test(String(c||""));
+const cvar=c=>COLORS.includes(c)?"var(--c-"+c+")":c;
 const WEIGHTS=[1,2,3,4,5];
 const DEFAULT_WEIGHT=3;
 const CARD={1:[168,1,13],2:[186,1,14],3:[204,1.5,14.5],4:[226,2,15.5],5:[248,3,17]};
@@ -304,8 +311,8 @@ const bd=$("#board"),cv=$("#canvas");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pw=p=>WEIGHTS.includes(+p.weight)?+p.weight:3;
 const lw=l=>WEIGHTS.includes(+l.weight)?+l.weight:3;
-const lc=l=>COLORS.includes(l.color)?l.color:"grey";
-const pcol=p=>COLORS.includes(p.color)?p.color:"";
+const lc=l=>okC(l.color)?l.color:"grey";
+const pcol=p=>okC(p.color)?p.color:"";
 const titleOf=id=>{const p=points.get(id);return(p&&p.title)||"Untitled"};
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const okId=id=>typeof id==="string"&&/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(id)&&id!=="."&&id!=="..";
@@ -506,12 +513,12 @@ function catchUpPanel(){setTimeout(()=>{if(panelStale&&!editingPanel()&&!panelPo
 const clampZ=z=>Math.min(ZMAX,Math.max(ZMIN,z));
 function loadView(){
   try{const v=JSON.parse(lsGet(KEY+"-view")||"null");if(v&&isFinite(v.x)&&isFinite(v.y)&&isFinite(v.z)){view.x=v.x;view.y=v.y;view.z=clampZ(v.z);hadView=true}}catch(_){}
-  const c=lsGet(KEY+"-color");if(COLORS.includes(c))lastColor=c;
+  const c=lsGet(KEY+"-color");if(okC(c))lastColor=c;
   const m=lsGet(KEY+"-lines");if(["all","conn","off"].includes(m))lineMode=m;
 }
 let viewT=0;
 function saveView(){clearTimeout(viewT);viewT=setTimeout(()=>lsSet(KEY+"-view",JSON.stringify(view)),300)}
-function setLastColor(c){if(COLORS.includes(c)){lastColor=c;lsSet(KEY+"-color",c)}}
+function setLastColor(c){if(okC(c)){lastColor=c;lsSet(KEY+"-color",c)}}
 function applyView(){
   cv.style.transform="translate("+view.x+"px,"+view.y+"px) scale("+view.z+")";
   const a=100*view.z,b=20*view.z,p=view.x+"px "+view.y+"px";
@@ -578,7 +585,7 @@ function renderBoard(){
     el.className="card"+(sel.has(p.id)?" sel":"")+(w>=4?" strong":"")+(w===1?" faint":"")+(pc?" tinted":"")+(open?" open":"")+(kids.length?" has-kids":"");
     el.dataset.id=p.id;el.tabIndex=0;el.setAttribute("role","button");
     el.setAttribute("aria-label",(p.title||"Untitled")+", weight "+w+(pc?", "+pc:"")+(kids.length?", "+kids.length+" items":""));
-    el.style.cssText="left:"+x+"px;top:"+y+"px;--cw:"+cw+"px;--bw:"+bw+"px;--fs:"+fs+"px"+(pc?";--cc:var(--c-"+pc+")":"");
+    el.style.cssText="left:"+x+"px;top:"+y+"px;--cw:"+cw+"px;--bw:"+bw+"px;--fs:"+fs+"px"+(pc?";--cc:"+cvar(pc):"");
     el.innerHTML='<div class="wd" aria-hidden="true">'+"●".repeat(w)+"○".repeat(5-w)+'</div><h3>'+esc(p.title||"Untitled")+'</h3>'+(p.note?'<p>'+esc(p.note)+'</p>':'')+
       (n=>'<button class="pic'+(n?' has':'')+(lb&&lb.card===p.id?' on':'')+'" type="button" data-act="pics" title="'+(n?n+' photo'+(n>1?'s':''):'Photos')+'" aria-label="'+(n?n+' photo'+(n>1?'s':''):'Add photos')+'">'+CAM+(n?'<span>'+n+'</span>':'<span class="plus" aria-hidden="true">+</span>')+'</button>')(nPics.get(p.id)||0)+
       '<span class="port l" title="Drag onto another card to connect"></span><span class="port" title="Drag onto another card to connect"></span>'+
@@ -632,9 +639,9 @@ function drawLinks(){
     const co='d="'+rt.d+'"';
     const tip='<title>'+esc(titleOf(l.from)+" and "+titleOf(l.to)+", weight "+w+(via?" (through a closed list)":"")+(l.note?"\n"+l.note:""))+'</title>';
     out+=(on?'<path '+co+' class="halo" stroke-width="'+(sw+8).toFixed(1)+'"/>':'')+
-      '<path '+co+' class="ln'+(via?" via":"")+hl+'" style="stroke:var(--c-'+c+')" stroke-width="'+sw.toFixed(1)+'"/>'+
+      '<path '+co+' class="ln'+(via?" via":"")+hl+'" style="stroke:'+cvar(c)+'" stroke-width="'+sw.toFixed(1)+'"/>'+
       '<path '+co+' class="hit" data-link="'+esc(l.id)+'">'+tip+'</path>'+
-      (l.note?'<circle class="nd'+hl+'" data-link="'+esc(l.id)+'" cx="'+rt.mx.toFixed(1)+'" cy="'+rt.my.toFixed(1)+'" r="'+(on?6:5)+'" style="fill:var(--c-'+c+')">'+tip+'</circle>':'');
+      (l.note?'<circle class="nd'+hl+'" data-link="'+esc(l.id)+'" cx="'+rt.mx.toFixed(1)+'" cy="'+rt.my.toFixed(1)+'" r="'+(on?6:5)+'" style="fill:'+cvar(c)+'">'+tip+'</circle>':'');
   }
   svg.innerHTML=out;
   svg.classList.toggle("has-sel",!!(sel.size||selLink));
@@ -685,14 +692,24 @@ function weightSeg(name,cur,label){
   return '<div class="seg" role="radiogroup" aria-label="'+label+'">'+WEIGHTS.map(n=>'<label><input type="radio" name="'+name+'" value="'+n+'"'+(n===cur?" checked":"")+'><span>'+n+'</span></label>').join("")+'</div>';
 }
 function swatchRow(id,cur,withNone){
+  const any=/^#[0-9a-f]{6}$/i.test(String(cur||""))?cur.toLowerCase():"";
   return '<div class="swatches" id="'+id+'">'+
     (withNone?'<button type="button" class="swatch none" data-c="" aria-label="No colour" aria-pressed="'+(cur===""||cur===undefined)+'"></button>':'')+
-    COLORS.map(c=>'<button type="button" class="swatch" style="--c:var(--c-'+c+')" data-c="'+c+'" aria-label="'+c+'" aria-pressed="'+(c===cur)+'"></button>').join("")+'</div>';
+    COLORS.map(c=>'<button type="button" class="swatch" style="--c:var(--c-'+c+')" data-c="'+c+'" aria-label="'+c+'" aria-pressed="'+(c===cur)+'"></button>').join("")+
+    '<label class="swatch any'+(any?' on':'')+'" title="Any colour"'+(any?' style="--c:'+any+'"':'')+'><input type="color" aria-label="Any colour" value="'+(any||"#888888")+'"></label></div>';
 }
-function wireSwatches(root,fn){root.querySelectorAll(".swatch").forEach(b=>b.addEventListener("click",()=>{fn(b.dataset.c);root.querySelectorAll(".swatch").forEach(s=>s.setAttribute("aria-pressed",String(s===b)))}))}
+function wireSwatches(root,fn){
+  const btns=[...root.querySelectorAll("button.swatch")],any=root.querySelector(".swatch.any"),inp=any&&any.querySelector("input");
+  btns.forEach(b=>b.addEventListener("click",()=>{fn(b.dataset.c,0);btns.forEach(s=>s.setAttribute("aria-pressed",String(s===b)));if(any){any.classList.remove("on");any.style.removeProperty("--c")}}));
+  if(inp){
+    /* live while the picker is open; saved once the dragging pauses */
+    const pick=(e,delay)=>{const c=String(inp.value||"").toLowerCase();if(!/^#[0-9a-f]{6}$/.test(c))return;fn(c,delay);btns.forEach(s=>s.setAttribute("aria-pressed","false"));any.classList.add("on");any.style.setProperty("--c",c)};
+    inp.addEventListener("input",e=>pick(e,400));inp.addEventListener("change",e=>pick(e,0));
+  }
+}
 function lockPanel(pb){
   if(!readOnly)return;
-  pb.querySelectorAll("input,textarea,.swatch,.seg input,#kadd,#kup,#kdn").forEach(el=>el.disabled=true);
+  pb.querySelectorAll("input,textarea,button.swatch,.seg input,#kadd,#kup,#kdn").forEach(el=>el.disabled=true);
   pb.querySelectorAll("#pdel,#ldel,#mdel,#gdel,#mgroup").forEach(el=>el.hidden=true);
 }
 
@@ -717,12 +734,12 @@ function renderPanel(){
       '<div class="ph"><span class="lab">Group</span><button class="btn" id="gdel" type="button">Delete group</button></div>'+
       '<div class="field"><label class="lab" for="g-title">Title</label><input id="g-title" value="'+esc(gr.title||"")+'" autocomplete="off"></div>'+
       '<div class="field"><label class="lab" for="g-note">Note</label><textarea id="g-note" rows="4">'+esc(gr.note||"")+'</textarea></div>'+
-      '<div class="field"><span class="lab">Colour</span>'+swatchRow("g-colour",COLORS.includes(gr.color)?gr.color:"",true)+'</div>'+
+      '<div class="field"><span class="lab">Colour</span>'+swatchRow("g-colour",okC(gr.color)?gr.color:"",true)+'</div>'+
       '<p class="hint">'+n+' card'+(n===1?'':'s')+' inside.'+(readOnly?'':' Drag the title tab or the border to move the group with every card inside it. Drag the bottom-right corner to resize it. Deleting the group keeps its cards.')+'</p>';
     const id=gr.id;
     $("#g-title").addEventListener("input",e=>{saveGroup(id,{title:e.target.value},TEXT_PAUSE);renderFrames()});
     $("#g-note").addEventListener("input",e=>{saveGroup(id,{note:e.target.value},TEXT_PAUSE);renderFrames()});
-    wireSwatches($("#g-colour"),c=>{saveGroup(id,{color:c});renderFrames()});
+    wireSwatches($("#g-colour"),(c,d)=>{saveGroup(id,{color:c},d);renderFrames()});
     $("#gdel").addEventListener("click",()=>deleteGroup(id));
     lockPanel(pb);lastSig=panelSig();return;
   }
@@ -737,7 +754,7 @@ function renderPanel(){
       (readOnly?'':'<p class="hint">Press <kbd>Delete</kbd> to remove this connection.</p>');
     const id=l.id;
     $("#l-note").addEventListener("input",e=>updateLink(id,{note:e.target.value},TEXT_PAUSE));
-    wireSwatches($("#l-colour"),c=>{setLastColor(c);updateLink(id,{color:c})});
+    wireSwatches($("#l-colour"),(c,d)=>{setLastColor(c);updateLink(id,{color:c},d)});
     pb.querySelectorAll('input[name="l-weight"]').forEach(r=>r.addEventListener("change",()=>updateLink(id,{weight:+r.value})));
     $("#ldel").addEventListener("click",()=>deleteLink(id));
     lockPanel(pb);lastSig=panelSig();return;
@@ -749,12 +766,12 @@ function renderPanel(){
     const shown=ps.slice(0,8);
     pb.innerHTML=
       '<div class="ph"><span class="lab">'+ps.length+' points selected</span><span>'+(groupsReady&&!readOnly?'<button class="btn" id="mgroup" type="button">Group these</button> ':'')+'<button class="btn" id="mdel" type="button">Delete all</button></span></div>'+
-      '<ul class="picked">'+shown.map(p=>'<li><i class="cd" style="'+(pcol(p)?'--c:var(--c-'+pcol(p)+')':'')+'"></i><span>'+esc(p.title||"Untitled")+'</span></li>').join("")+(ps.length>shown.length?'<li><span class="hint">and '+(ps.length-shown.length)+' more</span></li>':'')+'</ul>'+
+      '<ul class="picked">'+shown.map(p=>'<li><i class="cd" style="'+(pcol(p)?'--c:'+cvar(pcol(p)):'')+'"></i><span>'+esc(p.title||"Untitled")+'</span></li>').join("")+(ps.length>shown.length?'<li><span class="hint">and '+(ps.length-shown.length)+' more</span></li>':'')+'</ul>'+
       '<div class="field"><span class="lab">Colour for all</span>'+swatchRow("m-colour",cur,true)+'</div>'+
       '<div class="field"><span class="lab">Weight for all</span>'+weightSeg("m-weight",curW,"Weight for all")+'</div>'+
       (readOnly?'':'<p class="hint">Drag any of them to move them together. <kbd>Shift</kbd>+click a card to add or remove it. <kbd>Delete</kbd> removes them all.</p>');
     const ids=ps.map(p=>p.id);
-    wireSwatches($("#m-colour"),c=>{ids.forEach(i=>savePoint(i,{color:c}));renderBoard()});
+    wireSwatches($("#m-colour"),(c,d)=>{ids.forEach(i=>savePoint(i,{color:c},d));renderBoard()});
     pb.querySelectorAll('input[name="m-weight"]').forEach(r=>r.addEventListener("change",()=>{ids.forEach(i=>savePoint(i,{weight:+r.value}));renderBoard()}));
     $("#mdel").addEventListener("click",()=>deletePoints(ids));
     const mg=$("#mgroup");if(mg)mg.addEventListener("click",()=>groupAround(ids));
@@ -809,12 +826,12 @@ function renderPanel(){
     '<div class="field"><span class="lab">Colour</span>'+swatchRow("f-colour",pcol(p),true)+'</div>'+
     '<div class="field"><span class="lab">Weight</span>'+weightSeg("f-weight",pw(p),"Point weight")+'<span class="hint">5 is a main point, 1 is a side note.</span></div>'+
     '<h3 class="sub">Drop-down list</h3><div class="conn" id="kids">'+
-      (kids.length?kids.map(k=>'<div class="crow"><i class="cd sq" style="'+(pcol(p)?'--c:var(--c-'+pcol(p)+')':'')+'"></i><div class="ct"><a data-go="'+esc(k.id)+'">'+esc(k.title||"Untitled")+'</a></div></div>').join(""):'<p class="hint">No items yet.</p>')+
+      (kids.length?kids.map(k=>'<div class="crow"><i class="cd sq" style="'+(pcol(p)?'--c:'+cvar(pcol(p)):'')+'"></i><div class="ct"><a data-go="'+esc(k.id)+'">'+esc(k.title||"Untitled")+'</a></div></div>').join(""):'<p class="hint">No items yet.</p>')+
     '</div><div class="ph"><button class="btn" id="kadd" type="button">Add item</button>'+(kids.length?'<button class="btn quiet" id="ktog" type="button">'+(p.collapsed?"Open the list":"Close the list")+'</button>':'')+'</div>'+
     '<h3 class="sub">Connections</h3><div class="conn" id="conn"></div>';
   $("#f-title").addEventListener("input",e=>{savePoint(id,{title:e.target.value},TEXT_PAUSE);renderBoard()});
   $("#f-note").addEventListener("input",e=>{savePoint(id,{note:e.target.value},TEXT_PAUSE);renderBoard()});
-  wireSwatches($("#f-colour"),c=>{savePoint(id,{color:c});renderBoard();document.querySelectorAll("#kids .cd").forEach(d=>{if(c)d.style.setProperty("--c","var(--c-"+c+")");else d.style.removeProperty("--c")})});
+  wireSwatches($("#f-colour"),(c,d)=>{savePoint(id,{color:c},d);renderBoard();document.querySelectorAll("#kids .cd").forEach(d=>{if(c)d.style.setProperty("--c",cvar(c));else d.style.removeProperty("--c")})});
   pb.querySelectorAll('input[name="f-weight"]').forEach(r=>r.addEventListener("change",e=>{savePoint(id,{weight:+e.target.value});renderBoard()}));
   $("#pdel").addEventListener("click",()=>deletePoints([id]));
   pb.querySelectorAll("#kids [data-go]").forEach(a=>a.addEventListener("click",()=>goTo(a.dataset.go)));
@@ -828,7 +845,7 @@ function renderConn(){
   const rows=[...links.values()].filter(l=>(l.from===id||l.to===id)&&points.has(l.from)&&points.has(l.to)).sort((a,b)=>lw(b)-lw(a)).map(l=>{
     const o=l.from===id?l.to:l.from;
     const n=String(l.note||"").trim(),ns=n.length>90?n.slice(0,88)+"…":n;
-    return '<div class="crow"><i class="cd" style="--c:var(--c-'+lc(l)+')"></i><div class="ct"><a data-go="'+esc(o)+'">'+esc(titleOf(o))+'</a>'+(ns?'<span class="cn">'+esc(ns)+'</span>':'')+'</div><button class="cw" data-link-go="'+esc(l.id)+'" type="button" title="Open this connection">weight '+lw(l)+'</button></div>';
+    return '<div class="crow"><i class="cd" style="--c:'+cvar(lc(l))+'"></i><div class="ct"><a data-go="'+esc(o)+'">'+esc(titleOf(o))+'</a>'+(ns?'<span class="cn">'+esc(ns)+'</span>':'')+'</div><button class="cw" data-link-go="'+esc(l.id)+'" type="button" title="Open this connection">weight '+lw(l)+'</button></div>';
   }).join("");
   c.innerHTML=rows||'<p class="hint">'+(readOnly?'None yet.':'None yet. Drag from a dot on either side of this card onto another card.')+'</p>';
   c.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",()=>goTo(a.dataset.go)));
@@ -1372,7 +1389,7 @@ window.addEventListener("resize",()=>{if(lb)placePp()});
 
 /* ---------- groups: a titled frame; dragging its tab or border moves every card inside it ---------- */
 const GMIN_W=160,GMIN_H=100;
-const gcol=g=>COLORS.includes(g.color)?"var(--c-"+g.color+")":"var(--muted)";
+const gcol=g=>okC(g.color)?cvar(g.color):"var(--muted)";
 const frameEl=id=>$("#frames").querySelector('.gf[data-gid="'+CSS.escape(id)+'"]');
 function renderFrames(){
   const box=$("#frames");box.innerHTML="";
@@ -1510,7 +1527,7 @@ function replaceAll(v){
     groups=ng;
   }
   points=np;links=nl;sel=new Set();selLink=null;selGroup=null;undo.length=0;
-  if(COLORS.includes(v.lastColor))setLastColor(v.lastColor);
+  if(okC(v.lastColor))setLastColor(v.lastColor);
   flash("Backup opened for everyone");render();fitView();
 }
 

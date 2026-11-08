@@ -82,6 +82,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pic:not(.has):hover svg,.pic:not(.has):focus-visible svg{display:none}
 .pic:not(.has):hover .plus,.pic:not(.has):focus-visible .plus{display:inline}
 body.nopics .pic,body.ro .pic:not(.has){display:none}
+/* photo previews: cards with photos show the first one as a small square in the top-right corner */
+.pic.thumb{--tw:clamp(34px,calc(var(--cw,204px)*.19),48px);position:relative;top:auto;right:auto;float:right;display:block;width:var(--tw);height:var(--tw);margin:-1px -6px 6px 10px;padding:0;border:1px solid var(--cb,var(--line));border-radius:2px;background:var(--paper);color:var(--muted);opacity:1;overflow:hidden}
+.pic.thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.pic.thumb svg{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px}
+.pic.thumb span{position:absolute;right:2px;bottom:2px;padding:1px 3px;border-radius:2px;background:rgba(0,0,0,.62);color:#fff;font:600 9px/1.1 var(--f-mono)}
+.pic.thumb:hover,.pic.thumb.on{color:var(--accent);outline:2px solid var(--accent);outline-offset:1px}
 .pp{position:fixed;z-index:40;width:max-content;max-width:calc(100vw - 32px)}
 .pp-stage{position:relative;display:flex;align-items:center;justify-content:center;min-width:120px;min-height:80px;border-radius:3px;overflow:hidden;background:var(--paper);box-shadow:0 8px 26px rgba(0,0,0,.28);touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .pp-stage img{display:block;max-width:min(400px,calc(100vw - 40px));max-height:300px;width:auto;height:auto}
@@ -137,6 +143,8 @@ body.ro .card{cursor:pointer}
 #zsel option{background:var(--panel);color:var(--fg)}
 .linebar{position:absolute;left:12px;bottom:12px;z-index:6;display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:3px;box-shadow:0 2px 10px rgba(0,0,0,.08);cursor:default}
 .linebar .lab{padding:0 6px 0 5px}
+.lsep{width:1px;height:18px;background:var(--line);margin:0 4px}
+body.nopics .lsep,body.nopics #thumbs{display:none}
 .lm{border:0;background:transparent;height:28px;border-radius:3px;padding:0 9px;font:500 12px var(--f-mono);color:var(--muted);cursor:pointer}
 .lm:hover{background:var(--bg);color:var(--fg)}
 .lm[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
@@ -235,11 +243,13 @@ kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width
           <p>This takes a moment.</p>
         </div>
       </div>
-      <div class="linebar" role="group" aria-label="Which lines to show">
+      <div class="linebar" role="group" aria-label="View">
         <span class="lab">Lines</span>
         <button class="lm" type="button" data-lines="all" title="Show every line">All</button>
         <button class="lm" type="button" data-lines="conn" title="Show only the lines of the selected card">Connected</button>
         <button class="lm" type="button" data-lines="off" title="Hide all lines">Hidden</button>
+        <span class="lsep" aria-hidden="true"></span>
+        <button class="lm" id="thumbs" type="button" aria-pressed="true" title="Photo previews on cards: on">Photos</button>
       </div>
       <div class="zoombar" aria-label="Zoom">
         <button class="zb" id="zout" type="button" aria-label="Zoom out" title="Zoom out (Ctrl -)">−</button>
@@ -292,7 +302,7 @@ let pics=new Map(),picsReady=false,lb=null;
 let groups=new Map(),groupsReady=false,selGroup=null,drawMode=false,gdraw=null,gdrag=null;
 const picCache=new Map(),picLoading=new Map(),MAX_PIC=900000;
 let sel=new Set(),selLink=null,drag=null,wire=null,pan=null,mq=null;
-let lastColor="grey",lineMode="all";
+let lastColor="grey",lineMode="all",showThumbs=true;
 const undo=[];
 const view={x:0,y:0,z:1};
 let hadView=false,fitted=false;
@@ -515,6 +525,7 @@ function loadView(){
   try{const v=JSON.parse(lsGet(KEY+"-view")||"null");if(v&&isFinite(v.x)&&isFinite(v.y)&&isFinite(v.z)){view.x=v.x;view.y=v.y;view.z=clampZ(v.z);hadView=true}}catch(_){}
   const c=lsGet(KEY+"-color");if(okC(c))lastColor=c;
   const m=lsGet(KEY+"-lines");if(["all","conn","off"].includes(m))lineMode=m;
+  if(lsGet(KEY+"-thumbs")==="off")showThumbs=false;
 }
 let viewT=0;
 function saveView(){clearTimeout(viewT);viewT=setTimeout(()=>lsSet(KEY+"-view",JSON.stringify(view)),300)}
@@ -576,7 +587,8 @@ const CAM='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3" width
 function renderBoard(){
   renderFrames();
   cv.querySelectorAll(".card").forEach(n=>n.remove());
-  const nPics=new Map();for(const q of pics.values())nPics.set(q.card,(nPics.get(q.card)||0)+1);
+  const nPics=new Map(),firstPic=new Map();
+  for(const q of pics.values()){nPics.set(q.card,(nPics.get(q.card)||0)+1);const f=firstPic.get(q.card);if(!f||picCmp(q,f)<0)firstPic.set(q.card,q)}
   for(const p of points.values()){
     if(parentOf(p))continue;
     const w=pw(p),pc=pcol(p),x=+p.x||0,y=+p.y||0,[cw,bw,fs]=CARD[w];
@@ -586,8 +598,9 @@ function renderBoard(){
     el.dataset.id=p.id;el.tabIndex=0;el.setAttribute("role","button");
     el.setAttribute("aria-label",(p.title||"Untitled")+", weight "+w+(pc?", "+pc:"")+(kids.length?", "+kids.length+" items":""));
     el.style.cssText="left:"+x+"px;top:"+y+"px;--cw:"+cw+"px;--bw:"+bw+"px;--fs:"+fs+"px"+(pc?";--cc:"+cvar(pc):"");
-    el.innerHTML='<div class="wd" aria-hidden="true">'+"●".repeat(w)+"○".repeat(5-w)+'</div><h3>'+esc(p.title||"Untitled")+'</h3>'+(p.note?'<p>'+esc(p.note)+'</p>':'')+
-      (n=>'<button class="pic'+(n?' has':'')+(lb&&lb.card===p.id?' on':'')+'" type="button" data-act="pics" title="'+(n?n+' photo'+(n>1?'s':''):'Photos')+'" aria-label="'+(n?n+' photo'+(n>1?'s':''):'Add photos')+'">'+CAM+(n?'<span>'+n+'</span>':'<span class="plus" aria-hidden="true">+</span>')+'</button>')(nPics.get(p.id)||0)+
+    const nP=nPics.get(p.id)||0;
+    el.innerHTML=(showThumbs&&nP?thumbHtml(p.id,nP,firstPic.get(p.id)):(n=>'<button class="pic'+(n?' has':'')+(lb&&lb.card===p.id?' on':'')+'" type="button" data-act="pics" title="'+(n?n+' photo'+(n>1?'s':''):'Photos')+'" aria-label="'+(n?n+' photo'+(n>1?'s':''):'Add photos')+'">'+CAM+(n?'<span>'+n+'</span>':'<span class="plus" aria-hidden="true">+</span>')+'</button>')(nP))+'<div class="wd" aria-hidden="true">'+"●".repeat(w)+"○".repeat(5-w)+'</div><h3>'+esc(p.title||"Untitled")+'</h3>'+(p.note?'<p>'+esc(p.note)+'</p>':'')+
+      
       '<span class="port l" title="Drag onto another card to connect"></span><span class="port" title="Drag onto another card to connect"></span>'+
       '<div class="kidbar">'+(kids.length?'<button class="kb tog" type="button" data-act="toggle" title="'+(p.collapsed?"Open":"Close")+' the list">'+(p.collapsed?"▸":"▾")+' '+kids.length+'</button>':'')+
       '<button class="kb add" type="button" data-act="addkid" title="Add an item to this card\'s list" aria-label="Add an item">+</button></div>'+
@@ -787,7 +800,7 @@ function renderPanel(){
       '<li>Press <kbd>+</kbd> under a card to start a drop-down list of related items. <kbd>▾</kbd> opens or closes it. Click an item to edit it; <kbd>Enter</kbd> in its title adds the next one.</li>'+
       '<li>Select several cards with <kbd>Shift</kbd>+click, or hold <kbd>Shift</kbd> and drag a box on the board. <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all. Drag any selected card to move them together.</li>'+
       '<li>Hold <kbd>Ctrl</kbd> and drag a card to make a new card with the same size and colour.</li>'+
-      '<li>Hover over the photo icon in a card\'s top-right corner to see its photos, or click it to add the first photo. Click the icon to keep the photos open, add more with the + on the photo\'s edge, show it full screen with the button on its bottom corner (or a double-click), swipe or press the arrows to move between them, and Delete removes the one showing.</li>'+
+      '<li>Hover over the photo icon in a card\'s top-right corner to see its photos, or click it to add the first photo. Click the icon to keep the photos open, add more with the + on the photo\'s edge, show it full screen with the button on its bottom corner (or a double-click), swipe or press the arrows to move between them, and Delete removes the one showing. Cards with photos show the first one as a small preview; the Photos button at the bottom turns the previews on or off.</li>'+
       '<li>Drag from a dot on either side of a card onto another card to connect them.</li>'+
       '<li>Click a line to write a note on it or change its colour or weight. A dot in the middle of a line means it has a note.</li>'+
       '<li>Use Lines at the bottom left to show every line, only the selected card\'s lines (Connected), or none (Hidden).</li>'+
@@ -1128,8 +1141,10 @@ document.addEventListener("pointerup",()=>{if(panelPointer){panelPointer=false;i
 $("#zin").addEventListener("click",()=>zoomStep(1));
 $("#zout").addEventListener("click",()=>zoomStep(-1));
 $("#zfit").addEventListener("click",fitView);
-function showLineMode(){document.querySelectorAll(".lm").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lines===lineMode)))}
-document.querySelectorAll(".lm").forEach(b=>b.addEventListener("click",()=>{lineMode=b.dataset.lines;lsSet(KEY+"-lines",lineMode);showLineMode();drawLinks()}));
+function showLineMode(){document.querySelectorAll(".lm[data-lines]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.lines===lineMode)))}
+function showThumbMode(){const b=$("#thumbs");b.setAttribute("aria-pressed",String(showThumbs));b.title="Photo previews on cards: "+(showThumbs?"on":"off")}
+$("#thumbs").addEventListener("click",()=>{showThumbs=!showThumbs;lsSet(KEY+"-thumbs",showThumbs?"on":"off");showThumbMode();renderBoard()});
+document.querySelectorAll(".lm[data-lines]").forEach(b=>b.addEventListener("click",()=>{lineMode=b.dataset.lines;lsSet(KEY+"-lines",lineMode);showLineMode();drawLinks()}));
 $("#zsel").addEventListener("change",e=>{zoomCenter(+e.target.value/100);e.target.blur()});
 
 function typing(t){return t&&(t.tagName==="INPUT"&&!["radio","checkbox","button","file"].includes(t.type)||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable)}
@@ -1167,7 +1182,41 @@ window.addEventListener("pagehide",flushAll);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flushAll()});
 
 /* ---------- photos ---------- */
-const picsOf=cid=>[...pics.values()].filter(q=>q.card===cid).sort((a,b)=>(+a.o||0)-(+b.o||0)||(a.id<b.id?-1:1));
+const picCmp=(a,b)=>(+a.o||0)-(+b.o||0)||(a.id<b.id?-1:1);
+const picsOf=cid=>[...pics.values()].filter(q=>q.card===cid).sort(picCmp);
+/* previews: a tiny square JPEG kept on the photo's record (t), so cards show it without loading the full photo.
+   Older photos without one get it made from the full photo the first time a card shows it. */
+const thumbCache=new Map(),thumbBusy=new Set(),THUMB=112;
+const okThumb=t=>typeof t==="string"&&t.length<30000&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t);
+const thumbSrc=q=>okThumb(q.t)?q.t:(thumbCache.get(q.id)||null);
+function thumbHtml(cid,n,q){
+  const src=thumbSrc(q),lab=n+" photo"+(n>1?"s":"");
+  if(!src)needThumb(q);
+  return '<button class="pic has thumb'+(lb&&lb.card===cid?' on':'')+'" type="button" data-act="pics" data-tid="'+esc(q.id)+'" title="'+lab+'" aria-label="'+lab+'">'+(src?'<img alt="" src="'+src+'">':CAM)+(n>1?'<span>'+n+'</span>':'')+'</button>';
+}
+function makeThumb(d){
+  return new Promise(res=>{
+    const i=new Image();
+    i.onload=()=>{try{
+      const W0=i.naturalWidth,H0=i.naturalHeight,s=Math.min(W0,H0);if(!s){res(null);return}
+      const c=document.createElement("canvas");c.width=c.height=THUMB;
+      const g=c.getContext("2d");g.fillStyle="#ffffff";g.fillRect(0,0,THUMB,THUMB);g.drawImage(i,(W0-s)/2,(H0-s)/2,s,s,0,0,THUMB,THUMB);
+      const t=c.toDataURL("image/jpeg",0.72);res(okThumb(t)?t:null);
+    }catch(_){res(null)}};
+    i.onerror=()=>res(null);i.src=d;
+  });
+}
+function gotThumb(id,t){
+  thumbCache.set(id,t);
+  cv.querySelectorAll('.pic.thumb[data-tid="'+CSS.escape(id)+'"]').forEach(b=>{const sv=b.querySelector("svg");if(sv)sv.remove();let im=b.querySelector("img");if(!im){im=document.createElement("img");im.alt="";b.prepend(im)}im.src=t});
+  /* save it on the photo's record for everyone; if the database rules don't allow it yet, nothing breaks */
+  const q=pics.get(id);
+  if(db&&!readOnly&&q&&!okThumb(q.t))db.doc("pics/"+id).update({t}).catch(()=>{});
+}
+function needThumb(q){
+  if(thumbBusy.has(q.id))return;thumbBusy.add(q.id);
+  loadPic(q.id).then(d=>d?makeThumb(d):null).then(t=>{if(t)gotThumb(q.id,t)});
+}
 function loadPic(id){
   if(picCache.has(id))return Promise.resolve(picCache.get(id));
   if(picLoading.has(id))return picLoading.get(id);
@@ -1318,6 +1367,7 @@ async function addPhotos(files,cid){
       picCache.set(id,data);
       await api.doc("pics/"+id).set(meta);
       if(!pics.has(id))pics.set(id,{...meta,id});
+      thumbBusy.add(id);makeThumb(data).then(t=>{if(t)gotThumb(id,t)});
       added++;
       if(lb&&lb.card===cid){lb.id=id;renderPp()}else if(!lb||!lb.pinned){openPp(cid,true);if(lb){lb.id=id;renderPp()}}
       renderBoard();
@@ -1553,7 +1603,7 @@ function stopShared(quiet){
   render();refreshStatus();
 }
 function notConfigured(){unconfigured=true;offline=true;document.body.classList.add("ro");render();refreshStatus()}
-loadView();showLineMode();applyView();render();refreshStatus();
+loadView();showLineMode();showThumbMode();applyView();render();refreshStatus();
 </script>
 <script src="firebase-config.js"></script>
 <script type="module">
